@@ -1,0 +1,16 @@
+[Libraries]/
+[Libraries]/**
+Temp/
+Temp/**
+Obj/
+Obj/**
+Build/
+Builds/
+build/
+builds/
+Logs/
+Logs/**
+MemoryCaptures/
+MemoryCaptures/**
+UserSettings/
+Library/
