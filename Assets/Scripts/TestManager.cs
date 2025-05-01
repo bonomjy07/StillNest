@@ -42,8 +42,11 @@ public class TestManager : MonoBehaviour
                 LookVector = direction,
                 MoveVector = direction,
             };
-            
-            aiCharacter.SetInputs(ref inputs);
+
+            if (aiCharacter)
+            {
+                aiCharacter.SetInputs(ref inputs);
+            }
         }
     }
 }
