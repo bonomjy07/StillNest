@@ -1,76 +1,106 @@
-using System;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 
 public class PlacementManager : MonoBehaviour
 {
-	[Header("타일맵 설정")]
-	[SerializeField] private Tilemap _tilemap;                // 실제 타일맵
-	[SerializeField] private Tilemap _highlightTilemap;       // 하이라이트 표시용 타일맵
-	[SerializeField] private Tile _highlightTile;             // 하이라이트 타일 (반투명 등)
+    [Header("그리드")]
+    [SerializeField] private Grid _grid;
 
-	private bool _isPlacementMode = false;                    // 배치 모드 여부
-	private Vector3Int _prevCellPos = Vector3Int.zero;        // 이전 하이라이트 위치
+    [Header("타일맵 설정")]
+    [SerializeField] private Tilemap _tilemap;                // 실제 타일맵 (배경)
+    [SerializeField] private Tilemap _highlightTilemap;       // 하이라이트용 타일맵
+    [SerializeField] private Tile _highlightTile;             // 하이라이트 기본 타일
 
-	private void Update()
-	{
-		// 배치 모드 토글: Space 키
-		if (Input.GetKeyDown(KeyCode.Space))
-		{
-			TogglePlacementMode();
-		}
+    [Header("배치 조건")]
+    [SerializeField] private List<TileBase> _placeableTiles;  // 배치 가능 타일들
 
-		// 배치 모드일 때만 하이라이트
-		if (_isPlacementMode)
-		{
-			HandleMouseHighlight();
-		}
-		else
-		{
-			ClearHighlight();
-		}
-	}
+    [Header("유닛 설정")]
+    [SerializeField] private GameObject _unitPrefab;          // 배치할 유닛 프리팹
 
-	/// <summary>
-	/// 배치 모드 on/off 전환
-	/// </summary>
-	public void TogglePlacementMode()
-	{
-		_isPlacementMode = !_isPlacementMode;
-		Debug.Log($"배치 모드: {_isPlacementMode}");
+    private Vector3Int _previousMousePos = Vector3Int.zero;
+    private bool _isPlacementMode;
+    private Dictionary<Vector3Int, GameObject> _unitMap = new(); // 유닛 위치 기록
 
-		if (!_isPlacementMode)
-		{
-			ClearHighlight();
-		}
-	}
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            _isPlacementMode = !_isPlacementMode;
+            Debug.Log($"배치 모드: {_isPlacementMode}");
 
-	/// <summary>
-	/// 마우스 아래 타일을 하이라이트함
-	/// </summary>
-	private void HandleMouseHighlight()
-	{
-		Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-		Vector3Int cellPos = _tilemap.WorldToCell(mouseWorldPos);
+            if (!_isPlacementMode)
+            {
+                ClearHighlight();
+            }
+        }
 
-		if (cellPos != _prevCellPos)
-		{
-			_highlightTilemap.SetTile(_prevCellPos, null); // 이전 하이라이트 제거
-			_highlightTilemap.SetTile(cellPos, _highlightTile); // 현재 위치에 표시
-			
-			_prevCellPos = cellPos;
-		}
-	}
+        if (_isPlacementMode)
+        {
+            Vector3Int mouseCellPos = GetMouseCellPosition();
+            UpdateHighlight(mouseCellPos);
 
-	/// <summary>
-	/// 하이라이트 제거
-	/// </summary>
-	private void ClearHighlight()
-	{
-		_highlightTilemap.SetTile(_prevCellPos, null);
-		_prevCellPos = Vector3Int.zero;
-	}
-	
+            if (Input.GetMouseButtonDown(0))
+            {
+                TryPlaceUnit(mouseCellPos);
+            }
+        }
+    }
+
+    private Vector3Int GetMouseCellPosition()
+    {
+        Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        return _grid.WorldToCell(worldPos);
+    }
+
+    private void UpdateHighlight(Vector3Int cellPos)
+    {
+        if (cellPos == _previousMousePos)
+            return;
+
+        _highlightTilemap.SetTile(_previousMousePos, null);
+
+        bool canPlace = IsPlaceable(cellPos) && !_unitMap.ContainsKey(cellPos);
+        Color color = canPlace ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 0f, 0f, 0.4f);
+
+        Tile tileInstance = ScriptableObject.CreateInstance<Tile>();
+        tileInstance.sprite = _highlightTile.sprite;
+        tileInstance.color = color;
+
+        _highlightTilemap.SetTile(cellPos, tileInstance);
+        _previousMousePos = cellPos;
+    }
+
+    private void ClearHighlight()
+    {
+        _highlightTilemap.SetTile(_previousMousePos, null);
+        _previousMousePos = Vector3Int.zero;
+    }
+
+    private bool IsPlaceable(Vector3Int cellPos)
+    {
+        TileBase currentTile = _tilemap.GetTile(cellPos);
+        return _placeableTiles.Contains(currentTile);
+    }
+
+    private void TryPlaceUnit(Vector3Int cellPos)
+    {
+        if (!IsPlaceable(cellPos))
+        {
+            Debug.Log("해당 타일에는 유닛을 배치할 수 없습니다.");
+            return;
+        }
+
+        if (_unitMap.ContainsKey(cellPos))
+        {
+            Debug.Log("이미 유닛이 존재합니다.");
+            return;
+        }
+
+        Vector3 worldPos = _tilemap.GetCellCenterWorld(cellPos);
+        GameObject unit = Instantiate(_unitPrefab, worldPos, Quaternion.identity);
+        _unitMap[cellPos] = unit;
+
+        Debug.Log($"유닛 배치 완료: {cellPos}");
+    }
 }
