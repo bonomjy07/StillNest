@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
@@ -7,7 +7,7 @@ public class MeleeTower : MonoBehaviour
 {
     public float attackDamage = 10f;
     public float attackSpeed = 1f;
-    bool attackCooltime = false; // true ¸é ÄğÅ¸ÀÓÁß
+    bool attackCooltime = false; // true ë©´ ì¿¨íƒ€ì„ì¤‘
 
     private List<GameObject> monstersInRange = new List<GameObject>();
 
@@ -61,13 +61,13 @@ public class MeleeTower : MonoBehaviour
     {
         if (other.CompareTag("Monster"))
         {
-            Debug.Log("Àû °¨ÁöµÊ Ãß°¡1");
-            if (!monstersInRange.Contains(other.gameObject)) // Áßº¹°Ë»ç
+            Debug.Log("ì  ê°ì§€ë¨ ì¶”ê°€1");
+            if (!monstersInRange.Contains(other.gameObject)) // ì¤‘ë³µê²€ì‚¬
             {
-                Debug.Log("Àû °¨ÁöµÊ Ãß°¡2");
+                Debug.Log("ì  ê°ì§€ë¨ ì¶”ê°€2");
                 monstersInRange.Add(other.gameObject);
             }
-            // ¹üÀ§ ¾ÈÀÌ¸é ³Ö¾îÁÖ°í
+            // ë²”ìœ„ ì•ˆì´ë©´ ë„£ì–´ì£¼ê³ 
         }
     }
 
@@ -75,8 +75,8 @@ public class MeleeTower : MonoBehaviour
     {
         if (other.CompareTag("Monster"))
         {
-            // ¹üÀ§ ¾È¿¡¼­ ¸ó½ºÅÍ°¡ Á×´Â °æ¿ì´Â DestroyµÅ¼­ nullÀÌ µÊ
-            // ±×°ÍÀ» Ã³¸®ÇØÁà¾ßÇÔ
+            // ë²”ìœ„ ì•ˆì—ì„œ ëª¬ìŠ¤í„°ê°€ ì£½ëŠ” ê²½ìš°ëŠ” Destroyë¼ì„œ nullì´ ë¨
+            // ê·¸ê²ƒì„ ì²˜ë¦¬í•´ì¤˜ì•¼í•¨
             for (int i = monstersInRange.Count - 1; i >= 0; i--)
             {
                 if (monstersInRange[i] == null)
@@ -87,9 +87,9 @@ public class MeleeTower : MonoBehaviour
 
             if(other.gameObject != null && monstersInRange.Contains(other.gameObject))
             {
-                Debug.Log("Àû °¨ÁöµÊ Á¦°Å");
+                Debug.Log("ì  ê°ì§€ë¨ ì œê±°");
                 monstersInRange.Remove(other.gameObject);
-                // ¹üÀ§ ¹ÛÀÌ¸é »©ÁÖ°í
+                // ë²”ìœ„ ë°–ì´ë©´ ë¹¼ì£¼ê³ 
             }
         }
     }

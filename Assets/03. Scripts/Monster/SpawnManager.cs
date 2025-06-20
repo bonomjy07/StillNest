@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -11,12 +11,12 @@ public class SpawnManager : MonoBehaviour
 
     private int monsterCount = 0;
     private int monsterLimit = 100;
-    private bool activeGame = true; // ÀÌ°Ç ÀÓ½Ã·Î ¿©±â¼­¸¸ ¾µ°Çµ¥ ÀüÃ¼ °ÔÀÓ¿À¹ö¿Í °ü·ÃµÈ º¯¼ö·Î ³ªÁß¿¡ ÇØÁà¾ßÇÒµí
+    private bool activeGame = true; // ì´ê±´ ì„ì‹œë¡œ ì—¬ê¸°ì„œë§Œ ì“¸ê±´ë° ì „ì²´ ê²Œì„ì˜¤ë²„ì™€ ê´€ë ¨ëœ ë³€ìˆ˜ë¡œ ë‚˜ì¤‘ì— í•´ì¤˜ì•¼í• ë“¯
 
     private int currentWave = 1;
-    private int endWave = 50; // 50¿şÀÌºê ±îÁö Á¸Àç
-    private int monsterPerWave = 60; // ¿şÀÌºê ´ç ¼ÒÈ¯µÇ´Â ¸ó½ºÅÍÀÇ ¼ö
-    private int timePerWave = 40; // ¿şÀÌºê ´ç ÁÖ¾îÁö´Â ½Ã°£
+    private int endWave = 50; // 50ì›¨ì´ë¸Œ ê¹Œì§€ ì¡´ì¬
+    private int monsterPerWave = 60; // ì›¨ì´ë¸Œ ë‹¹ ì†Œí™˜ë˜ëŠ” ëª¬ìŠ¤í„°ì˜ ìˆ˜
+    private int timePerWave = 40; // ì›¨ì´ë¸Œ ë‹¹ ì£¼ì–´ì§€ëŠ” ì‹œê°„
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -72,9 +72,9 @@ public class SpawnManager : MonoBehaviour
     }
     IEnumerator WaveCountDown()
     {
-        // ¿şÀÌºê Ä«¿îÆ® ´Ù¿î ÇÔ¼ö UIÇ¥±â °ü·Ã ÀÛ¾÷µµ ¿©±â¼­ È£Ãâ
+        // ì›¨ì´ë¸Œ ì¹´ìš´íŠ¸ ë‹¤ìš´ í•¨ìˆ˜ UIí‘œê¸° ê´€ë ¨ ì‘ì—…ë„ ì—¬ê¸°ì„œ í˜¸ì¶œ
         yield return new WaitForSeconds(timePerWave);
-        // ÀÏ´Ü Áö±İÀº ÅëÀ¸·Î ÇØ³ù´Âµ¥ 1ÃÊ¸¶´Ù UI¹Ù²ãÁÖ·Á¸é ¹İº¹¹®À¸·Î 1ÃÊ¾¿ ÇÏ°Ô ÇÏ¸éµÉµí
+        // ì¼ë‹¨ ì§€ê¸ˆì€ í†µìœ¼ë¡œ í•´ë†¨ëŠ”ë° 1ì´ˆë§ˆë‹¤ UIë°”ê¿”ì£¼ë ¤ë©´ ë°˜ë³µë¬¸ìœ¼ë¡œ 1ì´ˆì”© í•˜ê²Œ í•˜ë©´ë ë“¯
         
     }
 

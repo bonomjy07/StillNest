@@ -1,20 +1,20 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
 public class MonsterController : MonoBehaviour
 {
-    //private Rigidbody rb; // #2D °ø»çÁß
+    //private Rigidbody rb; // #2D ê³µì‚¬ì¤‘
     private Rigidbody2D rb;
     private Tilemap tilemap;
 
-    private float speed = 3f; // monster¿¡ µû¶ó ´Ù¸¥ speed Àû¿ëÇÏ·Á¸é public ÇÏ°í prefabº°·Î Â÷µîÀû¿ëÇÒ°Í
+    private float speed = 3f; // monsterì— ë”°ë¼ ë‹¤ë¥¸ speed ì ìš©í•˜ë ¤ë©´ public í•˜ê³  prefabë³„ë¡œ ì°¨ë“±ì ìš©í• ê²ƒ
     public float health;
-    // ÇÁ¸®ÆÕ ¸î°¡Áö·Î µ¹·Á¾²°í ¿şÀÌºê ¸¶´Ù ´É·ÂÄ¡ ´Ù¸£°Ô ÇÒ´çÇÏ´Â ¹æ½ÄÀ¸·Î »ı°¢Áß
+    // í”„ë¦¬íŒ¹ ëª‡ê°€ì§€ë¡œ ëŒë ¤ì“°ê³  ì›¨ì´ë¸Œ ë§ˆë‹¤ ëŠ¥ë ¥ì¹˜ ë‹¤ë¥´ê²Œ í• ë‹¹í•˜ëŠ” ë°©ì‹ìœ¼ë¡œ ìƒê°ì¤‘
 
     public SpawnManager spawnManager;
 
-    // ¸ó½ºÅÍÀÇ ÇÇ°İ ½Ã »ö»ó º¯°æÀ» À§ÇÑ º¯¼ö
+    // ëª¬ìŠ¤í„°ì˜ í”¼ê²© ì‹œ ìƒ‰ìƒ ë³€ê²½ì„ ìœ„í•œ ë³€ìˆ˜
     private Renderer rend;
     private Color originColor;
     private float flashDuration = 0.2f;
@@ -42,7 +42,7 @@ public class MonsterController : MonoBehaviour
         //if (health <= 0)
         //{
         //    Destroy(gameObject);
-        //    spawnManager.RemoveMonster(); // SpawnManagerÂÊ¿¡ ¸ó½ºÅÍ Á×À»¶§ ¾Ë¸®´Â°Çµ¥ ¹Ì¿Ï¼º
+        //    spawnManager.RemoveMonster(); // SpawnManagerìª½ì— ëª¬ìŠ¤í„° ì£½ì„ë•Œ ì•Œë¦¬ëŠ”ê±´ë° ë¯¸ì™„ì„±
         //}
     }
 
@@ -71,7 +71,7 @@ public class MonsterController : MonoBehaviour
 
     public void SetTurnPos()
     {
-        // monster ¸¶´Ù ´Ù¸¥ ±âÁØÁ¡ÀÌ ÇÊ¿äÇÏ¸é ¿©±â¼­ ¼öÁ¤
+        // monster ë§ˆë‹¤ ë‹¤ë¥¸ ê¸°ì¤€ì ì´ í•„ìš”í•˜ë©´ ì—¬ê¸°ì„œ ìˆ˜ì •
         turnPos = new Vector2[4];
 
         BoundsInt bound = tilemap.cellBounds;
@@ -97,7 +97,7 @@ public class MonsterController : MonoBehaviour
         //StartCoroutine(HitEffect());
     }
 
-    // ¸ó½ºÅÍ °ø°İ¹ŞÀ» ½Ã »¡°£»ö ÀÌÆåÆ®
+    // ëª¬ìŠ¤í„° ê³µê²©ë°›ì„ ì‹œ ë¹¨ê°„ìƒ‰ ì´í™íŠ¸
     IEnumerator HitEffect()
     {
         rend.material.color = Color.red;
