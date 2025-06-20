@@ -2,46 +2,75 @@ using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
+using UnityEngine.Tilemaps;
 
 public class PlacementManager : MonoBehaviour
 {
-	public Camera sceneCamera;
-	public LayerMask placementLayerMask;
-	public GameObject mouseIndicator;
+	[Header("타일맵 설정")]
+	[SerializeField] private Tilemap _tilemap;                // 실제 타일맵
+	[SerializeField] private Tilemap _highlightTilemap;       // 하이라이트 표시용 타일맵
+	[SerializeField] private Tile _highlightTile;             // 하이라이트 타일 (반투명 등)
 
-	private Vector3 _lastPosition;
-
-	public event Action OnClicked, OnExit;
+	private bool _isPlacementMode = false;                    // 배치 모드 여부
+	private Vector3Int _prevCellPos = Vector3Int.zero;        // 이전 하이라이트 위치
 
 	private void Update()
 	{
-		if (Input.GetMouseButtonDown(0))
-			OnClicked?.Invoke();
-		if (Input.GetKeyDown(KeyCode.Escape))
-			OnExit?.Invoke();
-
-		Vector3 mousePosition = GetSelectedMapPosition();
-		if (mouseIndicator)
+		// 배치 모드 토글: Space 키
+		if (Input.GetKeyDown(KeyCode.Space))
 		{
-			mouseIndicator.transform.position = mousePosition;
+			TogglePlacementMode();
+		}
+
+		// 배치 모드일 때만 하이라이트
+		if (_isPlacementMode)
+		{
+			HandleMouseHighlight();
+		}
+		else
+		{
+			ClearHighlight();
 		}
 	}
 
-	public bool IsPointerOverUI() => EventSystem.current.IsPointerOverGameObject();
-
-	private Vector3 GetSelectedMapPosition()
+	/// <summary>
+	/// 배치 모드 on/off 전환
+	/// </summary>
+	public void TogglePlacementMode()
 	{
-		Vector3 mousePos = Input.mousePosition;
-		//mousePos.z = sceneCamera.nearClipPlane;
-		
-		Ray ray = sceneCamera.ScreenPointToRay(mousePos);
-		if (Physics.Raycast(ray, out RaycastHit hit))
+		_isPlacementMode = !_isPlacementMode;
+		Debug.Log($"배치 모드: {_isPlacementMode}");
+
+		if (!_isPlacementMode)
 		{
-			_lastPosition = hit.point;
+			ClearHighlight();
 		}
-		
-		Debug.LogError($"last position is : {_lastPosition}");
-		
-		return _lastPosition;
 	}
+
+	/// <summary>
+	/// 마우스 아래 타일을 하이라이트함
+	/// </summary>
+	private void HandleMouseHighlight()
+	{
+		Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+		Vector3Int cellPos = _tilemap.WorldToCell(mouseWorldPos);
+
+		if (cellPos != _prevCellPos)
+		{
+			_highlightTilemap.SetTile(_prevCellPos, null); // 이전 하이라이트 제거
+			_highlightTilemap.SetTile(cellPos, _highlightTile); // 현재 위치에 표시
+			
+			_prevCellPos = cellPos;
+		}
+	}
+
+	/// <summary>
+	/// 하이라이트 제거
+	/// </summary>
+	private void ClearHighlight()
+	{
+		_highlightTilemap.SetTile(_prevCellPos, null);
+		_prevCellPos = Vector3Int.zero;
+	}
+	
 }
