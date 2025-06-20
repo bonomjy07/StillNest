@@ -1,13 +1,17 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class SpawnManager : MonoBehaviour
 {
     public GameObject[] monsterPrefabs;
+    public Tilemap tilemap;
+
+    private Vector2 spawnPosition; 
 
     private int monsterCount = 0;
     private int monsterLimit = 100;
-    private bool activeGame = true; // 이건 임시로 여기서만 쓸건데 전체 게임오버와 관련된 변수로 나중에 적용해줘야할듯
+    private bool activeGame = true; // 이건 임시로 여기서만 쓸건데 전체 게임오버와 관련된 변수로 나중에 해줘야할듯
 
     private int currentWave = 1;
     private int endWave = 50; // 50웨이브 까지 존재
@@ -16,9 +20,17 @@ public class SpawnManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        //Instantiate(monsterPrefabs[0], new Vector3(0, 1.2f, 9), monsterPrefabs[0].transform.rotation);
+        // Get Spawn Position
+        Vector3Int topLeftCell = new Vector3Int(tilemap.cellBounds.xMin + 1, tilemap.cellBounds.yMax - 1, 0);
+        Vector3 spawnPos3D = tilemap.CellToWorld(topLeftCell) + (tilemap.cellSize / 2f);
+        spawnPosition = new Vector2(spawnPos3D.x, spawnPos3D.y + 0.14f);
+        
+        Debug.Log("Spawn Position : (" + spawnPosition.x + ", " + spawnPosition.y + ")");
+        
+
         StartCoroutine(SpawnLoop());
-        //SpawnWave());
+
+
     }
 
     // Update is called once per frame
@@ -31,7 +43,7 @@ public class SpawnManager : MonoBehaviour
             // Game Over Logic Start!
         }
 
-        Debug.Log("Monster Count : " + monsterCount);
+        //Debug.Log("Monster Count : " + monsterCount);
     }
 
     IEnumerator SpawnLoop()
@@ -43,24 +55,17 @@ public class SpawnManager : MonoBehaviour
             yield return StartCoroutine(WaveCountDown());
             currentWave++;
         }
-        // 웨이브 당 카운트 다운을 하나 호출해주고 
-        // 그다음에 해당 웨이브의 몬스터를 소환하는 함수를 호출한다
     }
 
     IEnumerator SpawnWave(int wave)
     {
-        int my_wave = wave > 1 ? 2 : 1;
-        //int my_wave;
-        //if (wave == 1)
-        //    my_wave = wave; // 일단 몬스터 종류가 2개라 1,2 만 사용할듯
-        //else if (wave > 1)
-        //    my_wave = 2;
-
         Debug.Log(wave + " Wave Start!");
 
+        int monsterIndex = Random.Range(0, monsterPrefabs.Length);
         for (int i = 0; i < monsterPerWave; i++)
         {
-            Instantiate(monsterPrefabs[my_wave - 1], new Vector3(0, 1.4f, 9), monsterPrefabs[my_wave - 1].transform.rotation);
+            GameObject mob = Instantiate(monsterPrefabs[monsterIndex], spawnPosition, Quaternion.identity);
+            mob.GetComponent<MonsterController>().SetTilemap(tilemap);
             monsterCount++;
             yield return new WaitForSeconds(0.5f);
         }
