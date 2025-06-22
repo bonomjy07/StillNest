@@ -8,7 +8,7 @@ public class Wizard : MonoBehaviour
 	[SerializeField] private float _moveSpeed = 2f;
 
 	[Header("[Attack]")]
-	[SerializeField] private FireBall _fireballPrefab;
+	[SerializeField] private Fireball _fireballPrefab;
 	[SerializeField] private Transform _fireballPoint;
 	[SerializeField] private float _attackCooldown = 0.3f;
 	[SerializeField] private float _attackRange = 10f;
@@ -122,9 +122,9 @@ public class Wizard : MonoBehaviour
 		_animator.SetTrigger(AttackHash);
 	}
 
-	private FireBall SpawnFireball(Transform target)
+	private Fireball SpawnFireball(Transform target)
 	{
-		FireBall fireball = Instantiate(_fireballPrefab, _fireballPoint.position, Quaternion.identity, transform);
+		Fireball fireball = Instantiate(_fireballPrefab, _fireballPoint.position, Quaternion.identity, transform);
 		fireball.Initialize(target.GetComponent<MonsterController>());
 		return fireball;
 	}

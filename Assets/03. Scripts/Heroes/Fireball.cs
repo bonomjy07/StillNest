@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class FireBall : MonoBehaviour
+public class Fireball : MonoBehaviour
 {
 	[Header("[Properties]")]
 	public float speed = 4f;
