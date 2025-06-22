@@ -17,6 +17,9 @@ public class PlacementManager : MonoBehaviour
     [Header("배치 조건")]
     [SerializeField] private List<TileBase> _placeableTiles;
 
+    [Header("선 그리기")]
+    [SerializeField] private DottedLineDrawer _lineDrawer;
+
     [Header("유닛 설정")]
     [SerializeField] private GameObject _unitPrefab;
     [SerializeField] private Transform _unitRoot;
@@ -25,11 +28,11 @@ public class PlacementManager : MonoBehaviour
     private Dictionary<Vector3Int, GameObject> _unitMap = new();
 
     private Vector3Int _previousMousePos = Vector3Int.zero;
-    
+
     // 유닛선택
     private GameObject _draggingUnit; 
     private Vector3Int _draggingFromCell;
-    
+
     // 유닛선택 타일
     private Vector3Int? _selectedCell;
     private Vector3Int? _targetCell;
@@ -85,11 +88,13 @@ public class PlacementManager : MonoBehaviour
 
             _draggingUnit = null;
             ClearSelectionHighlight();
+            _lineDrawer.Clear();
         }
 
-        if (_draggingUnit != null && cellPos != _draggingFromCell)
+        if (_draggingUnit && cellPos != _draggingFromCell)
         {
             UpdateTargetCell(cellPos);
+            DrawLine(_draggingFromCell, cellPos);
         }
 
         if (Input.GetMouseButtonDown(1))
@@ -119,11 +124,13 @@ public class PlacementManager : MonoBehaviour
 
             _draggingUnit = null;
             ClearSelectionHighlight();
+            _lineDrawer.Clear();
         }
 
         if (_draggingUnit && cellPos != _draggingFromCell)
         {
             UpdateTargetCell(cellPos);
+            DrawLine(_draggingFromCell, cellPos);
         }
     }
 
@@ -164,12 +171,14 @@ public class PlacementManager : MonoBehaviour
 
     private void TryRemoveUnit(Vector3Int cellPos)
     {
-        if (_unitMap.TryGetValue(cellPos, out GameObject unit))
+        if (!_unitMap.TryGetValue(cellPos, out GameObject unit))
         {
-            Destroy(unit);
-            _unitMap.Remove(cellPos);
-            Debug.Log($"유닛 제거 완료: {cellPos}");
+            return;
         }
+
+        Destroy(unit);
+        _unitMap.Remove(cellPos);
+        Debug.Log($"유닛 제거 완료: {cellPos}");
     }
 
     private void UpdatePlacementHighlight(Vector3Int cellPos)
@@ -244,5 +253,13 @@ public class PlacementManager : MonoBehaviour
         _highlightTilemap.SetTile(_previousMousePos, null);
         _previousMousePos = Vector3Int.zero;
         ClearSelectionHighlight();
+        _lineDrawer.Clear();
+    }
+
+    private void DrawLine(Vector3Int fromCell, Vector3Int toCell)
+    {
+        Vector3 fromWorld = _tilemap.GetCellCenterWorld(fromCell);
+        Vector3 toWorld = _tilemap.GetCellCenterWorld(toCell);
+        _lineDrawer.Draw(fromWorld, toWorld);
     }
 }
