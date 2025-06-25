@@ -1,137 +1,146 @@
-using System;
+using System.Collections;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class Wizard : MonoBehaviour
 {
-	[Header("[Movement]")]
-	[SerializeField] private float _moveSpeed = 2f;
+    [Header("[Movement]")]
+    [SerializeField] private float _moveSpeed = 2f;
 
-	[Header("[Attack]")]
-	[SerializeField] private Fireball _fireballPrefab;
-	[SerializeField] private Transform _fireballPoint;
-	[SerializeField] private float _attackCooldown = 0.3f;
-	[SerializeField] private float _attackRange = 10f;
-	[SerializeField] private LayerMask _monsterLayer;
+    [Header("[Fireball]")]
+    [SerializeField] private Fireball _fireballPrefab;
+    [SerializeField] private Transform _fireballPointRight;
+    [SerializeField] private Transform _fireballPointLeft;
 
-	// Components
-	private Animator _animator;
-	private SpriteRenderer _spriteRenderer; 
-	
-	private Vector3 _destination;
-	private bool _isMoving;
-	private const float STOP_THRESHOLD = 0.05f;
+    [Header("[Attack]")]
+    [SerializeField] private float _attackDuration = 0.11f + 0.02f; // 애니메이션 타이밍
+    [SerializeField] private float _attackCooldown = 1.0f;
+    [SerializeField] private float _attackRange = 10f;
+    [SerializeField] private LayerMask _monsterLayer;
 
-	private float _lastAttackTime;
+    private Animator _animator;
+    private SpriteRenderer _spriteRenderer;
 
-	private static readonly int SpeedHash = Animator.StringToHash("Speed");
-	private static readonly int AttackHash = Animator.StringToHash("Attack");
+    private Vector3 _destination;
+    private Transform _currentTarget;
 
-	private void Start()
-	{
-		_animator = GetComponent<Animator>();
-		_spriteRenderer = GetComponent<SpriteRenderer>();
-		_destination = transform.position;
-	}
+    private const float STOP_THRESHOLD = 0.05f;
 
-	private void Update()
-	{
-		if (_isMoving)
-		{
-			UpdateMovement();
-		}
+    private enum WizardState
+    {
+        Idle,
+        Moving,
+        Attacking
+    }
 
-		if (Time.time >= _lastAttackTime + _attackCooldown)
-		{
-			Transform target = FindTargetInRange();
-			if (target) 
-			{
-				Attack(target);
-			}
-		}
-	}
+    private WizardState _state = WizardState.Idle;
 
-	private void UpdateMovement()
-	{
-		Vector3 direction = transform.position - _destination;
-		float distance = direction.magnitude;
+    private static readonly int SpeedHash = Animator.StringToHash("Speed");
+    private static readonly int AttackHash = Animator.StringToHash("Attack");
 
-		if (distance < STOP_THRESHOLD)
-		{
-			transform.position = _destination;
-			_isMoving = false;
-			_animator.SetFloat(SpeedHash, 0f);
-			return;
-		}
+    private void Start()
+    {
+        _animator = GetComponent<Animator>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
+        _destination = transform.position;
+    }
 
-		Vector3 moveDir = -direction.normalized;
-		UpdateFacing(moveDir);
-		transform.position += moveDir * (_moveSpeed * Time.deltaTime);
-		_animator.SetFloat(SpeedHash, _moveSpeed);
-	}
-	
-	private void UpdateFacing(Vector3 moveDir)
-	{
-		if (moveDir.x != 0)
-		{
-			_spriteRenderer.flipX = moveDir.x < 0;
-		}
-	}
+    private void Update()
+    {
+        switch (_state)
+        {
+            case WizardState.Idle:
+                if (TryFindTarget(out var target))
+                {
+                    StartAttack(target);
+                }
 
-	public void MoveTo(Vector3 worldPosition)
-	{
-		_destination = worldPosition;
-		_isMoving = true;
-	}
-	
-	private Transform FindTargetInRange()
-	{
-		// 비싼연산...
-		Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, _attackRange, _monsterLayer);
+                break;
+            case WizardState.Moving:
+                UpdateMovement();
+                break;
 
-		if (hits.Length == 0)
-		{
-			return null;
-		}
+            case WizardState.Attacking:
+                // Do nothing
+                break;
+        }
+    }
 
-		// 가장 가까운 적 찾기 (선택사항)
-		float minDist = float.MaxValue;
-		Transform closest = null;
+    private void UpdateMovement()
+    {
+        Vector3 direction = transform.position - _destination;
+        float distance = direction.magnitude;
 
-		foreach (var hit in hits)
-		{
-			float dist = Vector2.Distance(transform.position, hit.transform.position);
-			if (dist < minDist)
-			{
-				minDist = dist;
-				closest = hit.transform;
-			}
-		}
+        if (distance < STOP_THRESHOLD)
+        {
+            transform.position = _destination;
+            _state = WizardState.Idle;
+            _animator.SetFloat(SpeedHash, 0f);
+            return;
+        }
 
-		return closest;
-	}
+        Vector3 moveDir = -direction.normalized;
+        UpdateFacing(moveDir);
+        transform.position += moveDir * (_moveSpeed * Time.deltaTime);
+        _animator.SetFloat(SpeedHash, _moveSpeed);
+    }
 
-	private void Attack(Transform target)
-	{
-		_lastAttackTime = Time.time;
+    private void UpdateFacing(Vector3 moveDir)
+    {
+        if (moveDir.x != 0)
+        {
+            _spriteRenderer.flipX = moveDir.x < 0;
+        }
+    }
 
-		SpawnFireball(target);
-		
-		UpdateFacing(target.position - transform.position);
-		
-		_animator.SetTrigger(AttackHash);
-	}
+    public void MoveTo(Vector3 worldPosition)
+    {
+        _destination = worldPosition;
+        _state = WizardState.Moving;
+    }
 
-	private Fireball SpawnFireball(Transform target)
-	{
-		Fireball fireball = Instantiate(_fireballPrefab, _fireballPoint.position, Quaternion.identity, transform);
-		fireball.Initialize(target.GetComponent<MonsterController>());
-		return fireball;
-	}
-	
-	private void OnDrawGizmosSelected()
-	{
-		Gizmos.color = Color.red;
-		Gizmos.DrawWireSphere(transform.position, _attackRange);
-	}
+    private bool TryFindTarget(out Transform target)
+    {
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, _attackRange, _monsterLayer);
+        target = null;
+
+        float minDist = float.MaxValue;
+
+        foreach (var hit in hits)
+        {
+            float dist = Vector2.Distance(transform.position, hit.transform.position);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                target = hit.transform;
+            }
+        }
+
+        return target;
+    }
+
+    private void StartAttack(Transform target)
+    {
+        _state = WizardState.Attacking;
+        _currentTarget = target;
+
+        UpdateFacing(target.position - transform.position);
+        _animator.SetTrigger(AttackHash);
+    }
+
+    public void OnAttackCastingFinish()
+    {
+        // Spawn Fire
+        Transform fireballPoint = _spriteRenderer.flipX ? _fireballPointLeft : _fireballPointRight;
+        Fireball fireball = Instantiate(_fireballPrefab, fireballPoint.position, Quaternion.identity, transform);
+        fireball.Initialize(_currentTarget.GetComponent<MonsterController>());
+
+        _state = WizardState.Idle;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, _attackRange);
+    }
+ 
 }
