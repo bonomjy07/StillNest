@@ -39,7 +39,6 @@ public class Fireball : MonoBehaviour
 
 		Vector3 dir = (_target.transform.position - transform.position).normalized;
 		transform.position += dir * (speed * Time.deltaTime);
-		
 	}
 
 	private void UpdateRotation()
@@ -50,8 +49,9 @@ public class Fireball : MonoBehaviour
 		}
 		
 		// TODO
-		//Vector3 direction = (_target.position - transform.position).normalized;
-		//transform.right = direction; // 오른쪽 방향을 바라보게 회전
+		Vector3 direction = (_target.transform.position - transform.position).normalized;
+		float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+		transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
 	}
 
 	private void OnTriggerEnter2D(Collider2D other)
