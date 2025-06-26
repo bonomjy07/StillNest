@@ -103,8 +103,6 @@ public class Wizard : MonoBehaviour
         {
             CancelAttack();
         }
-        
-        _animator.SetFloat(SpeedClipId, _moveSpeed);
     }
     
     private void CancelAttack()
