@@ -34,8 +34,8 @@ public class Wizard : MonoBehaviour
 
     private WizardState _state = WizardState.Idle;
 
-    private static readonly int SpeedHash = Animator.StringToHash("Speed");
-    private static readonly int AttackHash = Animator.StringToHash("Attack");
+    private static readonly int SpeedClipId = Animator.StringToHash("Speed");
+    private static readonly int AttackClipId = Animator.StringToHash("Attack");
 
     private void Start()
     {
@@ -49,18 +49,23 @@ public class Wizard : MonoBehaviour
         switch (_state)
         {
             case WizardState.Idle:
+            {
                 if (TryFindTarget(out var target))
                 {
                     StartAttack(target);
                 }
-
+            }
                 break;
             case WizardState.Moving:
+            {
                 UpdateMovement();
+            }
                 break;
 
             case WizardState.Attacking:
+            {
                 // Do nothing
+            }
                 break;
         }
     }
@@ -74,28 +79,38 @@ public class Wizard : MonoBehaviour
         {
             transform.position = _destination;
             _state = WizardState.Idle;
-            _animator.SetFloat(SpeedHash, 0f);
+            _animator.SetFloat(SpeedClipId, 0f);
             return;
         }
 
         Vector3 moveDir = -direction.normalized;
         UpdateFacing(moveDir);
         transform.position += moveDir * (_moveSpeed * Time.deltaTime);
-        _animator.SetFloat(SpeedHash, _moveSpeed);
+        _animator.SetFloat(SpeedClipId, _moveSpeed);
     }
 
     private void UpdateFacing(Vector3 moveDir)
     {
-        if (moveDir.x != 0)
-        {
-            _spriteRenderer.flipX = moveDir.x < 0;
-        }
+        _spriteRenderer.flipX = moveDir.x < 0;
     }
 
     public void MoveTo(Vector3 worldPosition)
     {
         _destination = worldPosition;
         _state = WizardState.Moving;
+        
+        if (_state == WizardState.Attacking)
+        {
+            CancelAttack();
+        }
+        
+        _animator.SetFloat(SpeedClipId, _moveSpeed);
+    }
+    
+    private void CancelAttack()
+    {
+        _currentTarget = null;
+        _animator.ResetTrigger(AttackClipId);
     }
 
     private bool TryFindTarget(out Transform target)
@@ -117,18 +132,23 @@ public class Wizard : MonoBehaviour
 
         return target;
     }
-
+    
     private void StartAttack(Transform target)
     {
         _state = WizardState.Attacking;
         _currentTarget = target;
 
         UpdateFacing(target.position - transform.position);
-        _animator.SetTrigger(AttackHash);
+        _animator.SetTrigger(AttackClipId);
     }
 
     public void OnAttackCastingFinish()
     {
+        if (_state != WizardState.Attacking)
+        {
+            return;
+        }
+        
         // Spawn Fire
         Transform fireballPoint = _spriteRenderer.flipX ? _fireballPointLeft : _fireballPointRight;
         Fireball fireball = Instantiate(_fireballPrefab, fireballPoint.position, Quaternion.identity, transform);
@@ -136,7 +156,7 @@ public class Wizard : MonoBehaviour
 
         _state = WizardState.Idle;
     }
-
+    
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
