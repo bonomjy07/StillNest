@@ -4,32 +4,31 @@ using UnityEngine.Tilemaps;
 
 public class MonsterController : MonoBehaviour
 {
-    //private Rigidbody rb; // #2D 공사중
-    private Rigidbody2D rb;
-    private Tilemap tilemap;
+    private Rigidbody2D _rb;
+    private Tilemap _tilemap;
 
-    private float speed = 3f; // monster에 따라 다른 speed 적용하려면 public 하고 prefab별로 차등적용할것
+    private float _speed = 3f; // monster에 따라 다른 speed 적용하려면 public 하고 prefab별로 차등적용할것
     public float health;
     // 프리팹 몇가지로 돌려쓰고 웨이브 마다 능력치 다르게 할당하는 방식으로 생각중
 
-    public SpawnManager spawnManager;
+    private SpawnManager _spawnManager;
 
     // 몬스터의 피격 시 색상 변경을 위한 변수
-    private Renderer rend;
-    private Color originColor;
-    private float flashDuration = 0.2f;
+    //private Renderer rend;
+    //private Color originColor;
+    //private float flashDuration = 0.2f;
 
     //public Transform[] turningPoints;
-    private int turnIndex = 0;
-    public Vector2[] turnPos;
+    private int _turnIndex = 0;
+    private Vector2[] _turnPos;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
-        spawnManager = GameObject.Find("Spawn Manager").GetComponent<SpawnManager>(); // SpawnManager script
-        rend = GetComponent<Renderer>();
-        originColor = rend.material.color;
+        _rb = GetComponent<Rigidbody2D>();
+        _spawnManager = GameObject.Find("Spawn Manager").GetComponent<SpawnManager>(); // SpawnManager script
+        //rend = GetComponent<Renderer>();
+        //originColor = rend.material.color;
 
         // turning point
         SetTurnPos();
@@ -42,14 +41,14 @@ public class MonsterController : MonoBehaviour
         //if (health <= 0)
         //{
         //    Destroy(gameObject);
-        //    spawnManager.RemoveMonster(); // SpawnManager쪽에 몬스터 죽을때 알리는건데 미완성
+        //    _spawnManager.RemoveMonster(); // SpawnManager쪽에 몬스터 죽을때 알리는건데 미완성
         //}
     }
 
     private void FixedUpdate()
     {
-        Vector2 targetPos = turnPos[turnIndex];
-        Vector2 moveDirection = (targetPos - rb.position).normalized;
+        Vector2 targetPos = _turnPos[_turnIndex];
+        Vector2 moveDirection = (targetPos - _rb.position).normalized;
 
         Vector3 originScale = transform.localScale;
         if (moveDirection.x > 0.01f) // right direction
@@ -57,38 +56,38 @@ public class MonsterController : MonoBehaviour
         else if(moveDirection.x < -0.01f) // left direction
             transform.localScale = new Vector3(-Mathf.Abs(originScale.x), originScale.y, originScale.z);
 
-        rb.MovePosition(rb.position + moveDirection * speed * Time.fixedDeltaTime);
-        if (Vector2.Distance(rb.position, targetPos) < 0.1f)
+        _rb.MovePosition(_rb.position + moveDirection * _speed * Time.fixedDeltaTime);
+        if (Vector2.Distance(_rb.position, targetPos) < 0.1f)
         {
-            turnIndex = (turnIndex + 1) % turnPos.Length;
+            _turnIndex = (_turnIndex + 1) % _turnPos.Length;
         }
     }
 
     public void SetTilemap(Tilemap tilemapParameter)
     {
-        tilemap = tilemapParameter;
+        _tilemap = tilemapParameter;
     }
 
     public void SetTurnPos()
     {
         // monster 마다 다른 기준점이 필요하면 여기서 수정
-        turnPos = new Vector2[4];
+        _turnPos = new Vector2[4];
 
-        BoundsInt bound = tilemap.cellBounds;
+        BoundsInt bound = _tilemap.cellBounds;
         Vector3Int topRightCell = new Vector3Int(bound.xMax - 2, bound.yMax - 1, 0);
         Vector3Int bottomRightCell = new Vector3Int(bound.xMax - 2, bound.yMin, 0);
         Vector3Int bottomLeftCell = new Vector3Int(bound.xMin + 1, bound.yMin, 0);
         Vector3Int topLeftCell = new Vector3Int(bound.xMin + 1, bound.yMax - 1, 0);
 
-        Vector3 topRightPos = tilemap.GetCellCenterWorld(topRightCell);
-        Vector3 bottomRightPos = tilemap.GetCellCenterWorld(bottomRightCell);
-        Vector3 bottomLeftPos = tilemap.GetCellCenterWorld(bottomLeftCell);
-        Vector3 topLeftPos = tilemap.GetCellCenterWorld(topLeftCell);
+        Vector3 topRightPos = _tilemap.GetCellCenterWorld(topRightCell);
+        Vector3 bottomRightPos = _tilemap.GetCellCenterWorld(bottomRightCell);
+        Vector3 bottomLeftPos = _tilemap.GetCellCenterWorld(bottomLeftCell);
+        Vector3 topLeftPos = _tilemap.GetCellCenterWorld(topLeftCell);
 
-        turnPos[0] = new Vector2(topRightPos.x, topRightPos.y + 0.14f);
-        turnPos[1] = new Vector2(bottomRightPos.x, bottomRightPos.y + 0.14f);
-        turnPos[2] = new Vector2(bottomLeftPos.x, bottomLeftPos.y + 0.14f);
-        turnPos[3] = new Vector2(topLeftPos.x, topLeftPos.y + 0.14f);
+        _turnPos[0] = new Vector2(topRightPos.x, topRightPos.y + 0.14f);
+        _turnPos[1] = new Vector2(bottomRightPos.x, bottomRightPos.y + 0.14f);
+        _turnPos[2] = new Vector2(bottomLeftPos.x, bottomLeftPos.y + 0.14f);
+        _turnPos[3] = new Vector2(topLeftPos.x, topLeftPos.y + 0.14f);
     }
 
     public void TakeDamage(float dmg)
@@ -98,11 +97,11 @@ public class MonsterController : MonoBehaviour
     }
 
     // 몬스터 공격받을 시 빨간색 이펙트
-    IEnumerator HitEffect()
-    {
-        rend.material.color = Color.red;
-        yield return new WaitForSeconds(flashDuration);
-        rend.material.color = originColor;
-    }
+    //IEnumerator HitEffect()
+    //{
+    //    rend.material.color = Color.red;
+    //    yield return new WaitForSeconds(flashDuration);
+    //    rend.material.color = originColor;
+    //}
 }
 
