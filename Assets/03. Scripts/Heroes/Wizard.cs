@@ -98,16 +98,16 @@ public class Wizard : MonoBehaviour
 
     public void MoveTo(Vector3 worldPosition)
     {
+        if (_state == WizardState.Attacking)
+        {
+            CancelAttack();
+        }
+
         _destination = worldPosition;
         _state = WizardState.Moving;
 
         Vector3 moveDir = worldPosition - transform.position;
         UpdateFacing(moveDir);
-        
-        if (_state == WizardState.Attacking)
-        {
-            CancelAttack();
-        }
     }
     
     private void CancelAttack()
