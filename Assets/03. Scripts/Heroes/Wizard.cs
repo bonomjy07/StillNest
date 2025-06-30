@@ -12,7 +12,6 @@ public class Wizard : MonoBehaviour
     [SerializeField] private Transform _fireballPointLeft;
 
     [Header("[Attack]")]
-    [SerializeField] private float _attackDuration = 0.11f + 0.02f; // 애니메이션 타이밍
     [SerializeField] private float _attackCooldown = 1.0f;
     [SerializeField] private float _attackRange = 10f;
     [SerializeField] private LayerMask _monsterLayer;
@@ -65,6 +64,11 @@ public class Wizard : MonoBehaviour
             case WizardState.Attacking:
             {
                 // Do nothing
+                if (_currentTarget)
+                {
+                    Vector3 direction = (_currentTarget.position - transform.position).normalized;
+                    UpdateFacing(direction);
+                }
             }
                 break;
         }
@@ -83,9 +87,7 @@ public class Wizard : MonoBehaviour
             return;
         }
 
-        Vector3 moveDir = -direction.normalized;
-        UpdateFacing(moveDir);
-        transform.position += moveDir * (_moveSpeed * Time.deltaTime);
+        transform.position += -direction.normalized * (_moveSpeed * Time.deltaTime);
         _animator.SetFloat(SpeedClipId, _moveSpeed);
     }
 
@@ -98,6 +100,9 @@ public class Wizard : MonoBehaviour
     {
         _destination = worldPosition;
         _state = WizardState.Moving;
+
+        Vector3 moveDir = worldPosition - transform.position;
+        UpdateFacing(moveDir);
         
         if (_state == WizardState.Attacking)
         {
@@ -136,7 +141,7 @@ public class Wizard : MonoBehaviour
         _state = WizardState.Attacking;
         _currentTarget = target;
 
-        UpdateFacing(target.position - transform.position);
+        UpdateFacing((target.position - transform.position).normalized);
         _animator.SetTrigger(AttackClipId);
     }
 
@@ -153,6 +158,7 @@ public class Wizard : MonoBehaviour
         fireball.Initialize(_currentTarget.GetComponent<MonsterController>());
 
         _state = WizardState.Idle;
+        _currentTarget = null;
     }
     
     private void OnDrawGizmosSelected()
