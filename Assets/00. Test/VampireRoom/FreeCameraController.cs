@@ -4,7 +4,7 @@ using System.Linq;
 using Cinemachine;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class FreeCameraController : MonoBehaviour
 {
     [Header("[Camera]")]
     public CinemachineVirtualCamera virtualCamera;
