@@ -141,8 +141,9 @@ public class Wizard : MonoBehaviour
         _state = WizardState.Attacking;
         _currentTarget = target;
 
-        UpdateFacing((target.position - transform.position).normalized);
         _animator.SetTrigger(AttackClipId);
+        Vector3 dir = (target.position - transform.position).normalized;
+        UpdateFacing(dir);
     }
 
     public void OnAttackCastingFinish()
@@ -154,7 +155,7 @@ public class Wizard : MonoBehaviour
         
         // Spawn Fire
         Transform fireballPoint = _spriteRenderer.flipX ? _fireballPointLeft : _fireballPointRight;
-        Fireball fireball = Instantiate(_fireballPrefab, fireballPoint.position, Quaternion.identity, transform);
+        Fireball fireball = Instantiate(_fireballPrefab, fireballPoint.position, Quaternion.identity);
         fireball.Initialize(_currentTarget.GetComponent<MonsterController>());
 
         _state = WizardState.Idle;
