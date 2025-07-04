@@ -2,6 +2,7 @@ using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public partial class HeroUnit : MonoBehaviour
 {
@@ -15,25 +16,35 @@ public partial class HeroUnit : MonoBehaviour
     
     [Header("[Animation]")]
     [SerializeField] protected AnimationEventHandler _animationEventHandler;
+
+    protected HeroState State
+    {
+        get => _state;
+        private set
+        {
+            _state = value;
+            _animator.SetInteger(HeroStateParamId, (int)value);
+        }
+    }
+    private HeroState _state = HeroState.Idle;
     
     // Components
     protected Animator _animator;
     protected SpriteRenderer _spriteRenderer;
     
-    // State
-    protected HeroState _state = HeroState.Idle;
-
     // Movement
     protected const float STOP_THRESHOLD = 0.05f;
     protected Vector3 _destination;
     
     // Attack
     protected Transform _currentTarget;
+    protected float _cooldownTimer; 
     
     protected int _currentAttackClipId = AttackClipId;
     
+    protected static readonly int HeroStateParamId = Animator.StringToHash("HeroState");
     protected static readonly int SpeedClipId = Animator.StringToHash("Speed");
-    protected static readonly int AttackClipId = Animator.StringToHash("Attack");
+    protected static readonly int AttackClipId = Animator.StringToHash("IsAttacking");
     
     protected virtual void Awake()
     {
@@ -46,11 +57,13 @@ public partial class HeroUnit : MonoBehaviour
     
     protected virtual void Update()
     {
+        UpdateCooldown();
+        
         switch (_state)
         {
             case HeroState.Idle:
             {
-                if (TryFindTarget(out var target))
+                if (TryFindTarget(out var target) && _cooldownTimer <= 0f)
                 {
                     StartAttack(target);
                 }
@@ -72,14 +85,23 @@ public partial class HeroUnit : MonoBehaviour
                 }
                 break;
             }
-            case HeroState.AttackCooldown:
-            {
-                // Do nothing, waiting for cooldown to finish
-                break;
-            }
         }
     }
-    
+
+    private void UpdateCooldown()
+    {
+        if (_cooldownTimer <= 0f)
+        {
+            return;
+        }
+
+        _cooldownTimer -= Time.deltaTime;
+        if (_cooldownTimer < 0f)
+        {
+            _cooldownTimer = 0f;
+        }
+    }
+
     private bool TryFindTarget(out Transform target)
     {
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, _attackRange, _monsterLayer);
@@ -102,10 +124,8 @@ public partial class HeroUnit : MonoBehaviour
    
     protected virtual void StartAttack(Transform target)
     {
-        _state = HeroState.Attacking;
+        State = HeroState.Attacking;
         _currentTarget = target;
-
-        _animator.SetTrigger(_currentAttackClipId);
 
         Vector3 dir = (target.position - transform.position).normalized;
         UpdateFacing(dir);
@@ -113,7 +133,7 @@ public partial class HeroUnit : MonoBehaviour
 
     protected void OnAttackAnimEnd()
     {
-        if (_state != HeroState.Attacking)
+        if (State != HeroState.Attacking)
         {
             return;
         }
@@ -133,24 +153,15 @@ public partial class HeroUnit : MonoBehaviour
 
     protected void EndAttack()
     {
-        _state = HeroState.Idle;
+        State = HeroState.Idle;
         _currentTarget = null;
-
-        StopCoroutine(nameof(Cor_AttackCooldown));
-        StartCoroutine(nameof(Cor_AttackCooldown));
+        _cooldownTimer = _attackCooldown;
     }
     
-   private IEnumerator Cor_AttackCooldown()
-    {
-        _state = HeroState.AttackCooldown;
-        yield return new WaitForSeconds(_attackCooldown);
-        _state = HeroState.Idle;
-    }
-
     protected void CancelAttack()
     {
         _currentTarget = null;
-        _animator.ResetTrigger(_currentAttackClipId);
+        State = HeroState.Idle;
     }
 
     private void UpdateMovement()
@@ -161,24 +172,22 @@ public partial class HeroUnit : MonoBehaviour
         if (distance < STOP_THRESHOLD)
         {
             transform.position = _destination;
-            _state = HeroState.Idle;
-            _animator.SetFloat(SpeedClipId, 0f);
+            State = HeroState.Idle;
             return;
         }
 
         transform.position += -direction.normalized * (_moveSpeed * Time.deltaTime);
-        _animator.SetFloat(SpeedClipId, _moveSpeed);
     }
 
     public void MoveTo(Vector3 worldPosition)
     {
-        if (_state == HeroState.Attacking)
+        if (State == HeroState.Attacking)
         {
             CancelAttack();
         }
 
+        State = HeroState.Moving;
         _destination = worldPosition;
-        _state = HeroState.Moving;
 
         Vector3 moveDir = worldPosition - transform.position;
         UpdateFacing(moveDir);
@@ -196,7 +205,7 @@ public partial class HeroUnit : MonoBehaviour
         
 #if UNITY_EDITOR
         Handles.color = Color.white;
-        Handles.Label(transform.position + Vector3.up * 1.5f, $"스테이트: {_state}");
+        Handles.Label(transform.position + Vector3.up * 1.5f, $"스테이트: {State}");
 #endif
     }
 }
@@ -205,10 +214,9 @@ public partial class HeroUnit
 {
     protected enum HeroState
     {
-        Idle,
-        Moving,
-        Attacking,
-        AttackCooldown,
+        Idle       = 0,
+        Moving     = 1,
+        Attacking  = 2,
     }
 }
  
