@@ -10,7 +10,6 @@ public class PlacementManager : Singleton<PlacementManager>
     [Header("타일맵 설정")]
     [SerializeField] private Tilemap _tilemap;                // 실제 배경 타일맵
     [SerializeField] private Tilemap _highlightTilemap;       // 하이라이트용 타일맵
-    [SerializeField] private Tile _highlightTile;             // 배치 가능 여부 표시용
     [SerializeField] private Tile _currentTileHighlight;      // 유닛 선택 위치용
     [SerializeField] private Tile _targetTileHighlight;       // 이동 목표 위치용
 
@@ -34,6 +33,12 @@ public class PlacementManager : Singleton<PlacementManager>
     private Vector3Int? _selectedCell;
     private Vector3Int? _targetCell;
 
+
+    private void Start()
+    {
+        _targetTileHighlight.color = Color.white;
+    }
+
     private void Update()
     {
         Vector3Int mouseCellPos = GetMouseCellPosition();
@@ -55,7 +60,7 @@ public class PlacementManager : Singleton<PlacementManager>
 
         if (Input.GetMouseButtonUp(0) && _draggingUnit)
         {
-            if (!_unitMap.ContainsKey(cellPos) && IsPlaceable(cellPos))
+            if (IsEmptyTile(cellPos))
             {
                 MoveUnit(_draggingUnit, _draggingFromCell, cellPos);
             }
@@ -94,10 +99,10 @@ public class PlacementManager : Singleton<PlacementManager>
         return _grid.WorldToCell(worldPos);
     }
 
-    private bool IsPlaceable(Vector3Int cellPos)
+    private bool IsEmptyTile(Vector3Int cellPos)
     {
         TileBase currentTile = _tilemap.GetTile(cellPos);
-        return _placeableTiles.Contains(currentTile);
+        return _placeableTiles.Contains(currentTile) && !_unitMap.ContainsKey(cellPos);
     }
 
     private void SelectCell(Vector3Int cellPos)
@@ -115,6 +120,7 @@ public class PlacementManager : Singleton<PlacementManager>
         }
 
         _targetCell = cellPos;
+        _targetTileHighlight.color = IsEmptyTile(cellPos) ? Color.white : Color.red;
         _highlightTilemap.SetTile(cellPos, _targetTileHighlight);
     }
 
@@ -156,12 +162,7 @@ public class PlacementManager : Singleton<PlacementManager>
                     continue;
                 }
 
-                if (!IsPlaceable(cellPos))
-                {
-                    continue;
-                }
-
-                if (_unitMap.ContainsKey(cellPos))
+                if (!IsEmptyTile(cellPos))
                 {
                     continue;
                 }
