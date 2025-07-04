@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 public class Fireball : MonoBehaviour
@@ -11,12 +11,12 @@ public class Fireball : MonoBehaviour
 	[SerializeField] private Animator _animator;
 	[SerializeField] private float _destroyDelay = 0.06f;
 
-	private MonsterController _target;
+	private MonsterHealth _target;
 
 	private bool _hasExploded;
 	private static readonly int ExplodeHash = Animator.StringToHash("Explode");
 
-	public void Initialize(MonsterController target)
+	public void Initialize(MonsterHealth target)
 	{
 		_target = target;
 	}
@@ -56,7 +56,7 @@ public class Fireball : MonoBehaviour
 
 	private void OnTriggerEnter2D(Collider2D other)
 	{
-		MonsterController monster = other.GetComponent<MonsterController>();
+		MonsterHealth monster = other.GetComponent<MonsterHealth>();
 		if (!monster)
 		{
 			return;

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 public class Wizard : MonoBehaviour
@@ -150,7 +150,7 @@ public class Wizard : MonoBehaviour
         // Spawn Fire
         Transform fireballPoint = _spriteRenderer.flipX ? _fireballPointLeft : _fireballPointRight;
         Fireball fireball = Instantiate(_fireballPrefab, fireballPoint.position, Quaternion.identity, transform);
-        fireball.Initialize(_currentTarget.GetComponent<MonsterController>());
+        fireball.Initialize(_currentTarget.GetComponent<MonsterHealth>());
 
         _state = WizardState.Idle;
     }

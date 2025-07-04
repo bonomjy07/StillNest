@@ -42,7 +42,7 @@ public class MeleeTower : MonoBehaviour
                 if (mob == null)
                     continue;
 
-                MonsterController mc = mob.GetComponent<MonsterController>();
+                MonsterHealth mc = mob.GetComponent<MonsterHealth>();
                 if (mc != null)
                 {
                     mc.TakeDamage(attackDamage);
