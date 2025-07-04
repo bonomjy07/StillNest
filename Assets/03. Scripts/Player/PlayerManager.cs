@@ -25,7 +25,7 @@ public class PlayerManager : Singleton<PlayerManager>
 			return;
 		}
 		
-		Wizard hero = PlacementManager.Instance.SpawnHero();
+		HeroUnit hero = PlacementManager.Instance.SpawnHero();
 		if (!hero)
 		{
 			return;

@@ -21,8 +21,8 @@ public class PlacementManager : Singleton<PlacementManager>
     [SerializeField] private DottedLineDrawer _lineDrawer;
 
     [Header("유닛 설정")]
-    [SerializeField] private GameObject _unitPrefab;
     [SerializeField] private Transform _unitRoot;
+    [SerializeField] private List<GameObject> _heroPrefabList;
 
     private Dictionary<Vector3Int, GameObject> _unitMap = new();
 
@@ -76,10 +76,10 @@ public class PlacementManager : Singleton<PlacementManager>
     {
         Vector3 worldPos = _tilemap.GetCellCenterWorld(to);
 
-        Wizard wizard = unitObject.GetComponent<Wizard>();
-        if (wizard) 
+        HeroUnit unit = unitObject.GetComponent<HeroUnit>();
+        if (unit) 
         {
-            wizard.MoveTo(worldPos);
+            unit.MoveTo(worldPos);
         }
 
         _unitMap.Remove(from);
@@ -141,7 +141,7 @@ public class PlacementManager : Singleton<PlacementManager>
         _lineDrawer.Draw(fromWorld, toWorld);
     }
 
-    public Wizard SpawnHero()
+    public HeroUnit SpawnHero()
     {
         BoundsInt bounds = _tilemap.cellBounds;
 
@@ -167,10 +167,11 @@ public class PlacementManager : Singleton<PlacementManager>
                 }
 
                 Vector3 worldPos = _tilemap.GetCellCenterWorld(cellPos);
-                GameObject unit = Instantiate(_unitPrefab, worldPos, Quaternion.identity, _unitRoot);
-                _unitMap[cellPos] = unit;
+                GameObject unitPrefab = _heroPrefabList[Random.Range(0, _heroPrefabList.Count)];
+                GameObject unitInstance = Instantiate(unitPrefab, worldPos, Quaternion.identity, _unitRoot);
+                _unitMap[cellPos] = unitInstance;
 
-                return unit.GetComponent<Wizard>();
+                return unitInstance.GetComponent<HeroUnit>();
             }
         }
 

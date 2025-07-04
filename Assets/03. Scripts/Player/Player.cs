@@ -8,7 +8,7 @@ public class Player : MonoBehaviour
 {
 	public ReactiveProperty<int> Money { get; } = new();
 
-	public ReactiveCollection<Wizard> Heroes { get; } = new();
+	public ReactiveCollection<HeroUnit> Heroes { get; } = new();
 
 	public bool HasEnoughMoney => Money.Value >= 20;
 
@@ -22,7 +22,7 @@ public class Player : MonoBehaviour
 		Money.Value = Math.Max(0, Money.Value - amount);
 	}
 	
-	public void AddHero(Wizard hero)
+	public void AddHero(HeroUnit hero)
 	{
 		if (hero == null)
 		{
