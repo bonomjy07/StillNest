@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class PlacementManager : MonoBehaviour
+public class PlacementManager : Singleton<PlacementManager>
 {
     [Header("그리드")]
     [SerializeField] private Grid _grid;
@@ -10,7 +10,6 @@ public class PlacementManager : MonoBehaviour
     [Header("타일맵 설정")]
     [SerializeField] private Tilemap _tilemap;                // 실제 배경 타일맵
     [SerializeField] private Tilemap _highlightTilemap;       // 하이라이트용 타일맵
-    [SerializeField] private Tile _highlightTile;             // 배치 가능 여부 표시용
     [SerializeField] private Tile _currentTileHighlight;      // 유닛 선택 위치용
     [SerializeField] private Tile _targetTileHighlight;       // 이동 목표 위치용
 
@@ -21,13 +20,10 @@ public class PlacementManager : MonoBehaviour
     [SerializeField] private DottedLineDrawer _lineDrawer;
 
     [Header("유닛 설정")]
-    [SerializeField] private GameObject _unitPrefab;
     [SerializeField] private Transform _unitRoot;
+    [SerializeField] private List<GameObject> _heroPrefabList;
 
-    private bool _isSummonMode;
     private Dictionary<Vector3Int, GameObject> _unitMap = new();
-
-    private Vector3Int _previousMousePos = Vector3Int.zero;
 
     // 유닛선택
     private GameObject _draggingUnit; 
@@ -37,70 +33,17 @@ public class PlacementManager : MonoBehaviour
     private Vector3Int? _selectedCell;
     private Vector3Int? _targetCell;
 
-    private void Update()
+
+    private void Start()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            _isSummonMode = !_isSummonMode;
-            Debug.Log($"소환 모드: {_isSummonMode}");
-            if (!_isSummonMode)
-            {
-                ClearHighlight();
-            }
-        }
-
-        Vector3Int mouseCellPos = GetMouseCellPosition();
-
-        if (_isSummonMode)
-        {
-            HandleSummonMode(mouseCellPos);
-        }
-        else
-        {
-            HandleNormalMode(mouseCellPos);
-        }
+        _targetTileHighlight.color = Color.white;
     }
 
-    private void HandleSummonMode(Vector3Int cellPos)
+    private void Update()
     {
-        UpdatePlacementHighlight(cellPos);
+        Vector3Int mouseCellPos = GetMouseCellPosition();
 
-        if (Input.GetMouseButtonDown(0))
-        {
-            if (_unitMap.TryGetValue(cellPos, out GameObject unit))
-            {
-                _draggingUnit = unit;
-                _draggingFromCell = cellPos;
-                SelectCell(cellPos);
-            }
-            else
-            {
-                TryPlaceUnit(cellPos);
-            }
-        }
-
-        if (Input.GetMouseButtonUp(0) && _draggingUnit)
-        {
-            if (!_unitMap.ContainsKey(cellPos) && IsPlaceable(cellPos))
-            {
-                MoveUnit(_draggingUnit, _draggingFromCell, cellPos);
-            }
-
-            _draggingUnit = null;
-            ClearSelectionHighlight();
-            _lineDrawer.Clear();
-        }
-
-        if (_draggingUnit && cellPos != _draggingFromCell)
-        {
-            UpdateTargetCell(cellPos);
-            DrawLine(_draggingFromCell, cellPos);
-        }
-
-        if (Input.GetMouseButtonDown(1))
-        {
-            TryRemoveUnit(cellPos);
-        }
+        HandleNormalMode(mouseCellPos);
     }
 
     private void HandleNormalMode(Vector3Int cellPos)
@@ -117,7 +60,7 @@ public class PlacementManager : MonoBehaviour
 
         if (Input.GetMouseButtonUp(0) && _draggingUnit)
         {
-            if (!_unitMap.ContainsKey(cellPos) && IsPlaceable(cellPos))
+            if (IsEmptyTile(cellPos))
             {
                 MoveUnit(_draggingUnit, _draggingFromCell, cellPos);
             }
@@ -138,67 +81,15 @@ public class PlacementManager : MonoBehaviour
     {
         Vector3 worldPos = _tilemap.GetCellCenterWorld(to);
 
-        Wizard wizard = unitObject.GetComponent<Wizard>();
-        if (wizard) 
+        HeroUnit unit = unitObject.GetComponent<HeroUnit>();
+        if (unit) 
         {
-            wizard.MoveTo(worldPos);
+            unit.MoveTo(worldPos);
         }
 
         _unitMap.Remove(from);
         _unitMap[to] = unitObject;
         Debug.Log($"유닛 이동 완료: {from} → {to}");
-    }
-
-    private void TryPlaceUnit(Vector3Int cellPos)
-    {
-        if (!IsPlaceable(cellPos))
-        {
-            Debug.Log("해당 타일에는 유닛을 배치할 수 없습니다.");
-            return;
-        }
-
-        if (_unitMap.ContainsKey(cellPos))
-        {
-            Debug.Log("이미 유닛이 존재합니다.");
-            return;
-        }
-
-        Vector3 worldPos = _tilemap.GetCellCenterWorld(cellPos);
-        GameObject unit = Instantiate(_unitPrefab, worldPos, Quaternion.identity, _unitRoot);
-        _unitMap[cellPos] = unit;
-        Debug.Log($"유닛 배치 완료: {cellPos}");
-    }
-
-    private void TryRemoveUnit(Vector3Int cellPos)
-    {
-        if (!_unitMap.TryGetValue(cellPos, out GameObject unit))
-        {
-            return;
-        }
-
-        Destroy(unit);
-        _unitMap.Remove(cellPos);
-        Debug.Log($"유닛 제거 완료: {cellPos}");
-    }
-
-    private void UpdatePlacementHighlight(Vector3Int cellPos)
-    {
-        if (cellPos == _previousMousePos)
-        {
-            return;
-        }
-
-        _highlightTilemap.SetTile(_previousMousePos, null);
-
-        bool canPlace = IsPlaceable(cellPos) && !_unitMap.ContainsKey(cellPos);
-        Color color = canPlace ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 0f, 0f, 0.4f);
-
-        Tile tileInstance = ScriptableObject.CreateInstance<Tile>();
-        tileInstance.sprite = _highlightTile.sprite;
-        tileInstance.color = color;
-
-        _highlightTilemap.SetTile(cellPos, tileInstance);
-        _previousMousePos = cellPos;
     }
 
     private Vector3Int GetMouseCellPosition()
@@ -208,10 +99,10 @@ public class PlacementManager : MonoBehaviour
         return _grid.WorldToCell(worldPos);
     }
 
-    private bool IsPlaceable(Vector3Int cellPos)
+    private bool IsEmptyTile(Vector3Int cellPos)
     {
         TileBase currentTile = _tilemap.GetTile(cellPos);
-        return _placeableTiles.Contains(currentTile);
+        return _placeableTiles.Contains(currentTile) && !_unitMap.ContainsKey(cellPos);
     }
 
     private void SelectCell(Vector3Int cellPos)
@@ -229,6 +120,7 @@ public class PlacementManager : MonoBehaviour
         }
 
         _targetCell = cellPos;
+        _targetTileHighlight.color = IsEmptyTile(cellPos) ? Color.white : Color.red;
         _highlightTilemap.SetTile(cellPos, _targetTileHighlight);
     }
 
@@ -248,18 +140,42 @@ public class PlacementManager : MonoBehaviour
         _targetCell = null;
     }
 
-    private void ClearHighlight()
-    {
-        _highlightTilemap.SetTile(_previousMousePos, null);
-        _previousMousePos = Vector3Int.zero;
-        ClearSelectionHighlight();
-        _lineDrawer.Clear();
-    }
-
     private void DrawLine(Vector3Int fromCell, Vector3Int toCell)
     {
         Vector3 fromWorld = _tilemap.GetCellCenterWorld(fromCell);
         Vector3 toWorld = _tilemap.GetCellCenterWorld(toCell);
         _lineDrawer.Draw(fromWorld, toWorld);
+    }
+
+    public HeroUnit SpawnHero()
+    {
+        BoundsInt bounds = _tilemap.cellBounds;
+
+        for (int y = bounds.yMax - 1; y >= bounds.yMin; y--) // 위에서 아래로
+        {
+            for (int x = bounds.xMin; x < bounds.xMax; x++) // 왼쪽에서 오른쪽으로
+            {
+                Vector3Int cellPos = new Vector3Int(x, y, 0);
+
+                if (!_tilemap.HasTile(cellPos))
+                {
+                    continue;
+                }
+
+                if (!IsEmptyTile(cellPos))
+                {
+                    continue;
+                }
+
+                Vector3 worldPos = _tilemap.GetCellCenterWorld(cellPos);
+                GameObject unitPrefab = _heroPrefabList[Random.Range(0, _heroPrefabList.Count)];
+                GameObject unitInstance = Instantiate(unitPrefab, worldPos, Quaternion.identity, _unitRoot);
+                _unitMap[cellPos] = unitInstance;
+
+                return unitInstance.GetComponent<HeroUnit>();
+            }
+        }
+
+        return null;
     }
 }
