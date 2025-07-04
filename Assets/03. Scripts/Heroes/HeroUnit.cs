@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using UnityEditor;
 using UnityEngine;
@@ -145,7 +145,7 @@ public partial class HeroUnit : MonoBehaviour
 
     protected virtual void Attack()
     {
-        if (_currentTarget && _currentTarget.TryGetComponent(out MonsterController monster))
+        if (_currentTarget && _currentTarget.TryGetComponent(out MonsterHealth monster))
         {
             monster.TakeDamage(10);
         }

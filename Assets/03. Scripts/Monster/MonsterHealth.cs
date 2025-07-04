@@ -24,7 +24,7 @@ public class MonsterHealth : MonoBehaviour
         _animator = GetComponent<Animator>();
         _isDead = false;
 
-        StartCoroutine(TempDotDamage()); // For Test
+        //StartCoroutine(TempDotDamage()); // For Test
     }
 
     // Update is called once per frame
