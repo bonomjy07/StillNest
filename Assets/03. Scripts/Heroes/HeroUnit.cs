@@ -10,6 +10,7 @@ public partial class HeroUnit : MonoBehaviour
     [SerializeField] protected float _moveSpeed = 2f;
     
     [Header("[Attack]")]
+    [SerializeField] protected int _damageAmount = 10;
     [SerializeField] protected float _attackCooldown = 1.0f;
     [SerializeField] protected float _attackRange = 10f;
     [SerializeField] protected LayerMask _monsterLayer;
@@ -147,7 +148,7 @@ public partial class HeroUnit : MonoBehaviour
     {
         if (_currentTarget && _currentTarget.TryGetComponent(out MonsterHealth monster))
         {
-            monster.TakeDamage(10);
+            monster.TakeDamage(_damageAmount);
         }
     }
 
