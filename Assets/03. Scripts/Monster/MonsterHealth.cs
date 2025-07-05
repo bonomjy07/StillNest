@@ -13,6 +13,8 @@ public class MonsterHealth : MonoBehaviour
     private Animator _animator;
     private MonsterMoving _monsterMoving;
 
+    private HealthBar _healthBar;
+
     private static readonly int TakeHitClipId = Animator.StringToHash("TakeHit");
     private static readonly int DeathClipId = Animator.StringToHash("Death");
     
@@ -51,6 +53,20 @@ public class MonsterHealth : MonoBehaviour
             _animator.ResetTrigger(TakeHitClipId);
             _animator.SetTrigger(TakeHitClipId);
         }
+        
+        ShowHealthBar();
+    }
+
+    private void ShowHealthBar()
+    {
+        _healthBar = HealthBarManager.Instance.GetHealthBar();
+        if (!_healthBar)
+        {
+            return;
+        }
+        
+        float healthPercentage = currentHp / maxHp;
+        _healthBar.SetBar(healthPercentage, transform);
     }
 
     IEnumerator TempDotDamage()
@@ -81,5 +97,15 @@ public class MonsterHealth : MonoBehaviour
         // Notice to Spawn Manager
         _spawnManager.OnMonsterDeath();
         Destroy(gameObject);
+        
+        HideHealthBar();
+    }
+    
+    private void HideHealthBar()
+    {
+        if (_healthBar)
+        {
+            _healthBar.Hide();
+        }
     }
 }
