@@ -11,9 +11,11 @@ public class Wizard : HeroUnit
     protected override void Attack()
     {
         // base.Attack();
-
-        Transform fireballPoint = _spriteRenderer.flipX ? _fireballPointLeft : _fireballPointRight;
-        Fireball fireball = Instantiate(_fireballPrefab, fireballPoint.position, Quaternion.identity);
-        fireball.Initialize(_currentTarget.GetComponent<MonsterHealth>());
+        if (_currentTarget && _currentTarget.TryGetComponent(out MonsterHealth monsterHealth))
+        {
+            Transform fireballPoint = _spriteRenderer.flipX ? _fireballPointLeft : _fireballPointRight;
+            Fireball fireball = Instantiate(_fireballPrefab, fireballPoint.position, Quaternion.identity);
+            fireball.Initialize(monsterHealth);
+        }
     }
 }
