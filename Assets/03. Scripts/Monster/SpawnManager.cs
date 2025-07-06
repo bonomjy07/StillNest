@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Tilemaps;
 
-public class SpawnManager : MonoBehaviour
+public class SpawnManager : Singleton<SpawnManager>
 {
     [SerializeField] private GameObject[] _monsterPrefabs;
     [SerializeField] private Transform _monsterRoot;
@@ -19,6 +20,9 @@ public class SpawnManager : MonoBehaviour
     [SerializeField] private int _endWave = 50; // 50웨이브 까지 존재
     [SerializeField] private int _monsterPerWave = 60; // 웨이브 당 소환되는 몬스터의 수
     [SerializeField] private int _timePerWave = 40; // 웨이브 당 주어지는 시간
+    
+    public UnityAction onMonsterDeath; // 몬스터가 죽었을 때 호출되는 이벤트 (TODO 어떤 몬스터가 죽었는지 넘겨줘야할듯)
+    
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -98,5 +102,7 @@ public class SpawnManager : MonoBehaviour
     {
         _monsterCount--;
         gameInfoUIManager.UpdateMonsterCount(_monsterCount, _monsterLimit);
+        
+        onMonsterDeath?.Invoke();
     }
 }

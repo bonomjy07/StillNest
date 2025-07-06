@@ -18,6 +18,19 @@ public class PlayerManager : Singleton<PlayerManager>
 		}
 	}
 
+	private void Start()
+	{
+		SpawnManager.Instance.onMonsterDeath += OnMonsterDeath;
+	}
+
+	private void OnMonsterDeath()
+	{
+		if (CurrentPlayer)
+		{
+			CurrentPlayer.AddMoney(20);
+		}
+	}
+
 	public void SpawnHero()
 	{
 		if (!CurrentPlayer)
