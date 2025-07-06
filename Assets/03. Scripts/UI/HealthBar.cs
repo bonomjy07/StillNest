@@ -33,6 +33,12 @@ public class HealthBar : MonoBehaviour
 
     private void UpdatePosition()
     {
+        if (!_target)
+        {
+            Hide();
+            return;
+        }
+        
         RectTransform thisRect = transform as RectTransform;
         if (thisRect)
         {
