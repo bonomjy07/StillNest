@@ -13,6 +13,7 @@ public partial class HeroUnit : MonoBehaviour
     [SerializeField] protected int _damageAmount = 10;
     [SerializeField] protected float _attackCooldown = 1.0f;
     [SerializeField] protected float _attackRange = 10f;
+    [SerializeField] protected float AttackSpeedMultiplier = 1.0f;
     [SerializeField] protected LayerMask _monsterLayer;
     
     [Header("[Animation]")]
@@ -46,7 +47,8 @@ public partial class HeroUnit : MonoBehaviour
     protected static readonly int HeroStateParamId = Animator.StringToHash("HeroState");
     protected static readonly int SpeedClipId = Animator.StringToHash("Speed");
     protected static readonly int AttackClipId = Animator.StringToHash("IsAttacking");
-    
+    private static readonly int SpeedMultiplier = Animator.StringToHash("AttackSpeedMultiplier");
+
     protected virtual void Awake()
     {
         _animator = GetComponent<Animator>();
@@ -55,7 +57,12 @@ public partial class HeroUnit : MonoBehaviour
         
         _animationEventHandler.onAttackAnimationEnd += OnAttackAnimEnd;
     }
-    
+
+    private void Start()
+    {
+        _animator.SetFloat(SpeedMultiplier, AttackSpeedMultiplier);
+    }
+
     protected virtual void Update()
     {
         UpdateCooldown();
