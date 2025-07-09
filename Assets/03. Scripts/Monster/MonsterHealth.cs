@@ -17,7 +17,8 @@ public class MonsterHealth : MonoBehaviour
 
     private static readonly int TakeHitClipId = Animator.StringToHash("TakeHit");
     private static readonly int DeathClipId = Animator.StringToHash("Death");
-    
+
+    public bool IsDead => currentHp <= 0;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
