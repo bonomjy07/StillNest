@@ -15,6 +15,8 @@ public class Fireball : MonoBehaviour
 
 	private bool _hasExploded;
 	private static readonly int ExplodeHash = Animator.StringToHash("Explode");
+	
+	private bool IsInvalidTarget => _target == null || _target.IsDead;
 
 	public void Initialize(MonsterHealth target)
 	{
@@ -27,6 +29,11 @@ public class Fireball : MonoBehaviour
 		{
 			UpdatePosition();
 			UpdateRotation();
+		}
+
+		if (IsInvalidTarget)
+		{
+			Explode();
 		}
 	}
 
