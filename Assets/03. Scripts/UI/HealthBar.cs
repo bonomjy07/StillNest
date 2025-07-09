@@ -26,6 +26,11 @@ public class HealthBar : MonoBehaviour
         _mainCamera = Camera.main;
     }
 
+    private void Start()
+    {
+        UpdatePosition();
+    }
+
     private void Update()
     {
         UpdatePosition();
@@ -72,22 +77,12 @@ public class HealthBar : MonoBehaviour
         _target = followTarget;
         
         SetFillAmount(percentage);
-
-        //StartFloat();
     }
     
     private void SetFillAmount(float percentage)
     {
         _fillImage.fillAmount = percentage;
         _fillImage.color = percentage <= _dangerAmount ? _dangerColor : Color.white;
-    }
-
-    private void StartFloat()
-    {
-        transform.DOMoveY(_yOffset, _duration)
-                 .SetEase(Ease.OutQuad)
-                 .SetRelative(true)
-                 .OnComplete(Hide);
     }
 
     public void Hide()
