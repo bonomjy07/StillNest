@@ -6,6 +6,7 @@ public class MonsterHealth : MonoBehaviour
     [SerializeField] private float maxHp = 100;
     [SerializeField] private float currentHp;
     [SerializeField] private float _deathAnimDuration = 0.22f; // Death 애니메이션 실행시간
+    [SerializeField] private int _money = 20;
     private bool _isDead;
     private int _wave;
 
@@ -19,6 +20,7 @@ public class MonsterHealth : MonoBehaviour
     private static readonly int DeathClipId = Animator.StringToHash("Death");
 
     public bool IsDead => currentHp <= 0;
+    public int Money => _money; // or _wave * 10;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -62,7 +64,7 @@ public class MonsterHealth : MonoBehaviour
     {
         if (!_healthBar) 
         {
-            _healthBar = HealthBarManager.Instance.GetHealthBar();
+            _healthBar = HealthBarManager.Instance.Spawn();
         }
         
         if (!_healthBar)
@@ -98,19 +100,31 @@ public class MonsterHealth : MonoBehaviour
     IEnumerator DestroyAfterDeath()
     {
         _animator.SetTrigger(DeathClipId);
+
+        ShowMoneyText();
+        
         yield return new WaitForSeconds(_deathAnimDuration);
         // Notice to Spawn Manager
-        _spawnManager.OnMonsterDeath();
+        _spawnManager.OnMonsterDeath(this);
         Destroy(gameObject);
         
         HideHealthBar();
     }
-    
+
+    private void ShowMoneyText()
+    {
+        FloatingMoneyText floatingMoneyText = FloatingMoneyTextManager.Instance.Spawn();
+        if (!floatingMoneyText)
+        {
+            return;
+        }
+        
+        floatingMoneyText.SetData(transform, Money);
+        floatingMoneyText._onTweenComplete = FloatingMoneyTextManager.Instance.Despawn;
+    }
+
     private void HideHealthBar()
     {
-        if (_healthBar)
-        {
-            _healthBar.Hide();
-        }
+        HealthBarManager.Instance.Despawn(_healthBar);
     }
 }

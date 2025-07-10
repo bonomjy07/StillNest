@@ -21,7 +21,7 @@ public class SpawnManager : Singleton<SpawnManager>
     [SerializeField] private int _monsterPerWave = 60; // 웨이브 당 소환되는 몬스터의 수
     [SerializeField] private int _timePerWave = 40; // 웨이브 당 주어지는 시간
     
-    public UnityAction onMonsterDeath; // 몬스터가 죽었을 때 호출되는 이벤트 (TODO 어떤 몬스터가 죽었는지 넘겨줘야할듯)
+    public UnityAction<MonsterHealth> onMonsterDeath; // 몬스터가 죽었을 때 호출되는 이벤트 (TODO 어떤 몬스터가 죽었는지 넘겨줘야할듯)
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -98,11 +98,11 @@ public class SpawnManager : Singleton<SpawnManager>
         
     }
 
-    public void OnMonsterDeath()
+    public void OnMonsterDeath(MonsterHealth monsterHealth)
     {
         _monsterCount--;
         gameInfoUIManager.UpdateMonsterCount(_monsterCount, _monsterLimit);
-        
-        onMonsterDeath?.Invoke();
+
+        onMonsterDeath?.Invoke(monsterHealth);
     }
 }
