@@ -40,38 +40,21 @@ public class HealthBar : MonoBehaviour
     {
         if (!_target)
         {
-            Hide();
             return;
         }
         
         RectTransform thisRect = transform as RectTransform;
-        if (thisRect)
+        if (!thisRect)
         {
-            thisRect.anchoredPosition = GetWorldPosition();
-        }
-    }
-    
-    // 나중에 Util.cs로 뺴기
-    private Vector2 GetWorldPosition()
-    {
-        if (!_target || !_mainCamera)
-        {
-            return Vector2.zero;
-        }
-
-        RectTransform canvasRect = transform.parent as RectTransform;
-        if (!canvasRect)
-        {
-            return Vector2.zero;
+            return;
         }
         
-        Vector2 canvasSizeDelta = canvasRect.sizeDelta;
-
-        Vector2 viewportPosition = _mainCamera.WorldToViewportPoint(_target.position);
-        Vector2 screenPosition = new Vector2(((viewportPosition.x * canvasSizeDelta.x) - (canvasSizeDelta.x * 0.5f)), ((viewportPosition.y * canvasSizeDelta.y) - (canvasSizeDelta.y * 0.5f)));
-        return screenPosition;
+        RectTransform canvasRect = transform.parent as RectTransform;
+        
+        Vector2 screenPosition = Utils.GetWorldPosition(canvasRect, _target, _mainCamera);
+        thisRect.anchoredPosition = screenPosition;
     }
-
+    
     public void SetBar(float percentage, Transform followTarget)
     {
         _target = followTarget;
@@ -83,16 +66,5 @@ public class HealthBar : MonoBehaviour
     {
         _fillImage.fillAmount = percentage;
         _fillImage.color = percentage <= _dangerAmount ? _dangerColor : Color.white;
-    }
-
-    public void Hide()
-    {
-        _target = null;
-        _onRelease?.Invoke(this); // it will hide
-    }
-    
-    public void SetReleaseCallback(Action<HealthBar> onRelease)
-    {
-        _onRelease = onRelease;
     }
 }
