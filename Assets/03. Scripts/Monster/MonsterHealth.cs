@@ -60,7 +60,11 @@ public class MonsterHealth : MonoBehaviour
 
     private void ShowHealthBar()
     {
-        _healthBar = HealthBarManager.Instance.GetHealthBar();
+        if (!_healthBar) 
+        {
+            _healthBar = HealthBarManager.Instance.GetHealthBar();
+        }
+        
         if (!_healthBar)
         {
             return;
