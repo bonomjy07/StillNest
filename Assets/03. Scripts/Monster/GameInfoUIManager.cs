@@ -20,7 +20,7 @@ public class GameInfoUIManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     public void UpdateWave(int wave)
@@ -53,7 +53,10 @@ public class GameInfoUIManager : MonoBehaviour
             _wavePopupAnimator = _wavePopup.GetComponent<Animator>();
 
         _wavePopup.SetActive(true);
-        _wavePopupText.text = $"Wave  {wave}";
+        if (wave % 5 == 0)
+            _wavePopupText.text = $"Boss";
+        else
+            _wavePopupText.text = $"Wave  {wave}";
         _wavePopupAnimator.Play("WavePopupAnim", 0, 0f);
         // WavePopupAnim 상태 애니메이션을 Layer 0(Base) 에서 0초부터 재생
     }

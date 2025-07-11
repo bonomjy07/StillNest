@@ -3,62 +3,66 @@ using UnityEngine;
 
 public class MonsterHealth : MonoBehaviour
 {
-    [SerializeField] private float hp;
-    [SerializeField] private float _deathAnimDuration = 0.22f; // Death 애니메이션 실행시간
-    private bool _isDead;
-    private int _wave;
+    [SerializeField] protected float _hp;
+    [SerializeField] protected float _deathAnimDuration = 0.22f; // Death 애니메이션 실행시간
+    protected bool _isDead;
+    protected int _wave;
 
-    private SpawnManager _spawnManager;
-    private Animator _animator;
+    protected SpawnManager _spawnManager;
+    protected Animator _animator;
     private MonsterMoving _monsterMoving;
 
-    private static readonly int TakeHitClipId = Animator.StringToHash("TakeHit");
-    private static readonly int DeathClipId = Animator.StringToHash("Death");
+    protected static readonly int TakeHitClipId = Animator.StringToHash("TakeHit");
+    protected static readonly int DeathClipId = Animator.StringToHash("Death");
     
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        _spawnManager = GameObject.Find("Spawn Manager").GetComponent<SpawnManager>(); // SpawnManager script
-        _monsterMoving = GetComponent<MonsterMoving>();
-        _animator = GetComponent<Animator>();
-        _isDead = false;
+        
 
-        //StartCoroutine(TempDotDamage()); // For Test
+        StartCoroutine(TempDotDamage()); // For Test
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (hp <= 0 && !_isDead)
+        if (_hp <= 0 && !_isDead)
         {
             Die();
             //_spawnManager.RemoveMonster(); // SpawnManager쪽에 몬스터 죽을때 알리는건데 미완성
         }
     }
+    protected virtual void Awake()
+    {
+        _spawnManager = GameObject.Find("Spawn Manager").GetComponent<SpawnManager>(); // SpawnManager script
+        _monsterMoving = GetComponent<MonsterMoving>();
+        _animator = GetComponent<Animator>();
+        _isDead = false;
+    }
 
-    public void Initialize(int wave)
+    public virtual void Initialize(int wave)
     {
         _wave = wave;
-        hp = _wave * 100;
+        _hp = _wave * 50;
     }
     public void TakeDamage(float dmg)
     {
         if(!_isDead)
         {
-            hp -= dmg;
+            _hp -= dmg;
             _animator.ResetTrigger(TakeHitClipId);
             _animator.SetTrigger(TakeHitClipId);
         }
     }
 
-    IEnumerator TempDotDamage()
+    protected IEnumerator TempDotDamage()
     {
         // 임시로 유닛을 사용하지 않고 몬스터의 Die로직을 처리하기위해 초당 도트템 적용
-        while(hp > 0)
+        while(_hp > 0)
         {
             yield return new WaitForSeconds(2f);
-            hp -= 20f;
+            _hp -= 20f;
             //_animator.SetTrigger("TakeHit");
             _animator.ResetTrigger(TakeHitClipId);
             _animator.SetTrigger(TakeHitClipId);
@@ -66,7 +70,7 @@ public class MonsterHealth : MonoBehaviour
         }
     }
 
-    private void Die()
+    protected virtual void Die()
     {
         _isDead = true;
         // Notice to MonsterMoving
@@ -74,12 +78,12 @@ public class MonsterHealth : MonoBehaviour
         StartCoroutine(DestroyAfterDeath());
     }
 
-    IEnumerator DestroyAfterDeath()
+    protected virtual IEnumerator DestroyAfterDeath()
     {
         _animator.SetTrigger(DeathClipId);
         yield return new WaitForSeconds(_deathAnimDuration);
         // Notice to Spawn Manager
-        _spawnManager.OnMonsterDeath();
+        _spawnManager.OnMonsterDeath(0);
         Destroy(gameObject);
     }
 }
