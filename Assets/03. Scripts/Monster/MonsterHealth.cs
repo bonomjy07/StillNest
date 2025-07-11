@@ -129,6 +129,11 @@ public class MonsterHealth : MonoBehaviour
 
     private void HideHealthBar()
     {
+        if (!_healthBar)
+        {
+            return;
+        }
+        
         HealthBarManager.Instance.Despawn(_healthBar);
     }
 }
