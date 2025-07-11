@@ -28,7 +28,7 @@ public class SpawnManager : Singleton<SpawnManager>
     [SerializeField] private int _timePerWave = 40; // 웨이브 당 주어지는 시간
     [SerializeField] private int _timePerBoss = 90; // 웨이브 당 주어지는 시간
     
-    public UnityAction<MonsterHealth> onMonsterDeath; // 몬스터가 죽었을 때 호출되는 이벤트 (TODO 어떤 몬스터가 죽었는지 넘겨줘야할듯)
+    public UnityAction<int /*Money*/> onMonsterDeath; // 몬스터가 죽었을 때 호출되는 이벤트 (TODO 어떤 몬스터가 죽었는지 넘겨줘야할듯)
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -152,7 +152,10 @@ public class SpawnManager : Singleton<SpawnManager>
 
         if (type == 1) // boss
             _bossAlive = false;
-
-        // onMonsterDeath?.Invoke(monsterHealth);
+        
+        // Notify monster's money
+        bool isBoss = type == 1;
+        int money = _currentWave * (isBoss ? 40 : 20); // 보스는 40, 일반 몬스터는 20
+        onMonsterDeath?.Invoke(money);
     }
 }
