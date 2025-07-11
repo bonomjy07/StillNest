@@ -3,8 +3,10 @@ using UnityEngine;
 
 public class MonsterHealth : MonoBehaviour
 {
-    [SerializeField] protected float _hp;
+    [SerializeField] protected float maxHp = 100;
+    [SerializeField] protected float currentHp;
     [SerializeField] protected float _deathAnimDuration = 0.22f; // Death 애니메이션 실행시간
+    [SerializeField] protected int _money = 20;
     protected bool _isDead;
     protected int _wave;
 
@@ -12,9 +14,13 @@ public class MonsterHealth : MonoBehaviour
     protected Animator _animator;
     private MonsterMoving _monsterMoving;
 
+    private HealthBar _healthBar;
+
     protected static readonly int TakeHitClipId = Animator.StringToHash("TakeHit");
     protected static readonly int DeathClipId = Animator.StringToHash("Death");
-    
+
+    public bool IsDead => currentHp <= 0;
+    public int Money => _money; // or _wave * 10;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -27,7 +33,7 @@ public class MonsterHealth : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (_hp <= 0 && !_isDead)
+        if (currentHp <= 0 && !_isDead)
         {
             Die();
             //_spawnManager.RemoveMonster(); // SpawnManager쪽에 몬스터 죽을때 알리는건데 미완성
@@ -44,29 +50,46 @@ public class MonsterHealth : MonoBehaviour
     public virtual void Initialize(int wave)
     {
         _wave = wave;
-        _hp = _wave * 50;
+        currentHp = _wave * 50;
     }
     public void TakeDamage(float dmg)
     {
         if(!_isDead)
         {
-            _hp -= dmg;
+            currentHp -= dmg;
             _animator.ResetTrigger(TakeHitClipId);
             _animator.SetTrigger(TakeHitClipId);
         }
+        
+        ShowHealthBar();
+    }
+
+    private void ShowHealthBar()
+    {
+        if (!_healthBar) 
+        {
+            _healthBar = HealthBarManager.Instance.Spawn();
+        }
+        
+        if (!_healthBar)
+        {
+            return;
+        }
+        
+        float healthPercentage = currentHp / maxHp;
+        _healthBar.SetBar(healthPercentage, transform);
     }
 
     protected IEnumerator TempDotDamage()
     {
         // 임시로 유닛을 사용하지 않고 몬스터의 Die로직을 처리하기위해 초당 도트템 적용
-        while(_hp > 0)
+        while(currentHp > 0)
         {
             yield return new WaitForSeconds(2f);
-            _hp -= 20f;
+            currentHp -= 20f;
             //_animator.SetTrigger("TakeHit");
             _animator.ResetTrigger(TakeHitClipId);
             _animator.SetTrigger(TakeHitClipId);
-
         }
     }
 
@@ -81,9 +104,31 @@ public class MonsterHealth : MonoBehaviour
     protected virtual IEnumerator DestroyAfterDeath()
     {
         _animator.SetTrigger(DeathClipId);
+
+        ShowMoneyText();
+        
         yield return new WaitForSeconds(_deathAnimDuration);
         // Notice to Spawn Manager
         _spawnManager.OnMonsterDeath(0);
         Destroy(gameObject);
+        
+        HideHealthBar();
+    }
+
+    private void ShowMoneyText()
+    {
+        FloatingMoneyText floatingMoneyText = FloatingMoneyTextManager.Instance.Spawn();
+        if (!floatingMoneyText)
+        {
+            return;
+        }
+        
+        floatingMoneyText.SetData(transform, Money);
+        floatingMoneyText._onTweenComplete = FloatingMoneyTextManager.Instance.Despawn;
+    }
+
+    private void HideHealthBar()
+    {
+        HealthBarManager.Instance.Despawn(_healthBar);
     }
 }

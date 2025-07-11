@@ -26,9 +26,19 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 				return _instance;
 			}
 			
-			GameObject go = new GameObject(typeof(T).Name);
-			_instance = go.AddComponent<T>();
-			DontDestroyOnLoad(go);
+			GameObject prefab = Resources.Load<GameObject>($"Managers/{typeof(T).Name}");
+			if (prefab)
+			{
+				GameObject go = Instantiate(prefab);
+				_instance = go.GetComponent<T>();
+			}
+			else
+			{
+				GameObject go = new GameObject(typeof(T).Name);
+				_instance = go.AddComponent<T>();
+			}
+			
+			DontDestroyOnLoad(_instance.gameObject);
 
 			return _instance;
 		}

@@ -22,6 +22,11 @@ public class Player : MonoBehaviour
 		Money.Value = Math.Max(0, Money.Value - amount);
 	}
 	
+	public void AddMoney(int amount)
+	{
+		Money.Value += amount;
+	}
+	
 	public void AddHero(HeroUnit hero)
 	{
 		if (hero == null)

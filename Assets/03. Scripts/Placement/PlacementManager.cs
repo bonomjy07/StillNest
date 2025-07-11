@@ -8,10 +8,13 @@ public class PlacementManager : Singleton<PlacementManager>
     [SerializeField] private Grid _grid;
 
     [Header("타일맵 설정")]
-    [SerializeField] private Tilemap _tilemap;                // 실제 배경 타일맵
-    [SerializeField] private Tilemap _highlightTilemap;       // 하이라이트용 타일맵
-    [SerializeField] private Tile _currentTileHighlight;      // 유닛 선택 위치용
-    [SerializeField] private Tile _targetTileHighlight;       // 이동 목표 위치용
+    [SerializeField] private Tilemap _tilemap; // 실제 배경 타일맵
+    [SerializeField] private TilemapRenderer _groundLineTilemapRenderer;
+    [SerializeField] private Tilemap _highlightTilemap; // 하이라이트용 타일맵
+
+    [Header("Highlight")]
+    [SerializeField] private Tile _currentTileHighlight; // 유닛 선택 위치용
+    [SerializeField] private Tile _targetTileHighlight; // 이동 목표 위치용
 
     [Header("배치 조건")]
     [SerializeField] private List<TileBase> _placeableTiles;
@@ -75,6 +78,8 @@ public class PlacementManager : Singleton<PlacementManager>
             UpdateTargetCell(cellPos);
             DrawLine(_draggingFromCell, cellPos);
         }
+
+        UpdateGroundLine();
     }
 
     private void MoveUnit(GameObject unitObject, Vector3Int from, Vector3Int to)
@@ -140,6 +145,34 @@ public class PlacementManager : Singleton<PlacementManager>
         _targetCell = null;
     }
 
+    private void UpdateGroundLine()
+    {
+        if (_draggingUnit)
+        {
+            ShowGroundLine();
+        }
+        else
+        {
+            HideGroundLine();
+        }
+    }
+
+    private void ShowGroundLine()
+    {
+        if (_groundLineTilemapRenderer)
+        {
+            _groundLineTilemapRenderer.enabled = true;
+        }
+    }
+
+    private void HideGroundLine()
+    {
+        if (_groundLineTilemapRenderer)
+        {
+            _groundLineTilemapRenderer.enabled = false;
+        }
+    }
+    
     private void DrawLine(Vector3Int fromCell, Vector3Int toCell)
     {
         Vector3 fromWorld = _tilemap.GetCellCenterWorld(fromCell);

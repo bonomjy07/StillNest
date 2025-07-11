@@ -27,7 +27,7 @@ public class MainHUD : MonoBehaviour
 		if (moneyText)
 		{
 			currentPlayer.Money
-			             .Subscribe(money => moneyText.SetText($"현찰:{money}"))
+			             .Subscribe(money => moneyText.SetText($"{money}"))
 			             .AddTo(this);
 		}
 
