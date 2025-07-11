@@ -13,7 +13,7 @@ public class BossHealth : MonsterHealth
     // Update is called once per frame
     void Update()
     {
-        if (_hp <= 0 && !_isDead)
+        if (_currentHp <= 0 && !_isDead)
         {
             Die();
         }
@@ -30,7 +30,7 @@ public class BossHealth : MonsterHealth
     public override void Initialize(int wave)
     {
         _wave = wave;
-        _hp = _wave * 1000;
+        _currentHp = _wave * 1000;
     }
 
     protected override void Die()
