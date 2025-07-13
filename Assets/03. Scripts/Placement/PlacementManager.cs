@@ -4,15 +4,7 @@ using UnityEngine.Tilemaps;
 
 public class PlacementManager : Singleton<PlacementManager>
 {
-    [Header("그리드")]
-    [SerializeField] private Grid _grid;
-
-    [Header("타일맵 설정")]
-    [SerializeField] private Tilemap _tilemap; // 실제 배경 타일맵
-    [SerializeField] private TilemapRenderer _groundLineTilemapRenderer;
-    [SerializeField] private Tilemap _highlightTilemap; // 하이라이트용 타일맵
-
-    [Header("Highlight")]
+    [Header("[Highlight]")]
     [SerializeField] private Tile _currentTileHighlight; // 유닛 선택 위치용
     [SerializeField] private Tile _targetTileHighlight; // 이동 목표 위치용
 
@@ -26,6 +18,14 @@ public class PlacementManager : Singleton<PlacementManager>
     [SerializeField] private Transform _unitRoot;
     [SerializeField] private List<GameObject> _heroPrefabList;
 
+    // 영웅 배치
+    private Grid _grid;
+    private Tilemap _heroTileMap;
+    
+    // 하이라이트
+    private TilemapRenderer _heroTileMapRenderer;
+    private Tilemap _selectTileMap;
+    
     private Dictionary<Vector3Int, GameObject> _unitMap = new();
 
     // 유닛선택
@@ -36,9 +36,15 @@ public class PlacementManager : Singleton<PlacementManager>
     private Vector3Int? _selectedCell;
     private Vector3Int? _targetCell;
 
-
     private void Start()
     {
+        // Map Setting
+        _grid = DuoMap.Inst.grid;
+        _heroTileMap = DuoMap.Inst.GetMyHeroTileMap();
+        _heroTileMapRenderer = DuoMap.Inst.GetMyHeroTileMapRenderer();
+        _selectTileMap = DuoMap.Inst.selectHighlightTileMap;
+        
+        // Highlight Color
         _targetTileHighlight.color = Color.white;
     }
 
@@ -84,7 +90,7 @@ public class PlacementManager : Singleton<PlacementManager>
 
     private void MoveUnit(GameObject unitObject, Vector3Int from, Vector3Int to)
     {
-        Vector3 worldPos = _tilemap.GetCellCenterWorld(to);
+        Vector3 worldPos = _heroTileMap.GetCellCenterWorld(to);
 
         HeroUnit unit = unitObject.GetComponent<HeroUnit>();
         if (unit) 
@@ -106,39 +112,40 @@ public class PlacementManager : Singleton<PlacementManager>
 
     private bool IsEmptyTile(Vector3Int cellPos)
     {
-        TileBase currentTile = _tilemap.GetTile(cellPos);
-        return _placeableTiles.Contains(currentTile) && !_unitMap.ContainsKey(cellPos);
+        TileBase currentTile = _heroTileMap.GetTile(cellPos);
+        return  currentTile && !_unitMap.ContainsKey(cellPos);
+        //return _placeableTiles.Contains(currentTile) && !_unitMap.ContainsKey(cellPos);
     }
 
     private void SelectCell(Vector3Int cellPos)
     {
         ClearSelectionHighlight();
         _selectedCell = cellPos;
-        _highlightTilemap.SetTile(cellPos, _currentTileHighlight);
+        _selectTileMap.SetTile(cellPos, _currentTileHighlight);
     }
 
     private void UpdateTargetCell(Vector3Int cellPos)
     {
         if (_targetCell.HasValue && _targetCell != cellPos)
         {
-            _highlightTilemap.SetTile(_targetCell.Value, null);
+            _selectTileMap.SetTile(_targetCell.Value, null);
         }
 
         _targetCell = cellPos;
         _targetTileHighlight.color = IsEmptyTile(cellPos) ? Color.white : Color.red;
-        _highlightTilemap.SetTile(cellPos, _targetTileHighlight);
+        _selectTileMap.SetTile(cellPos, _targetTileHighlight);
     }
 
     private void ClearSelectionHighlight()
     {
         if (_selectedCell.HasValue)
         {
-            _highlightTilemap.SetTile(_selectedCell.Value, null);
+            _selectTileMap.SetTile(_selectedCell.Value, null);
         }
 
         if (_targetCell.HasValue)
         {
-            _highlightTilemap.SetTile(_targetCell.Value, null);
+            _selectTileMap.SetTile(_targetCell.Value, null);
         }
 
         _selectedCell = null;
@@ -159,30 +166,30 @@ public class PlacementManager : Singleton<PlacementManager>
 
     private void ShowGroundLine()
     {
-        if (_groundLineTilemapRenderer)
+        if (_heroTileMapRenderer)
         {
-            _groundLineTilemapRenderer.enabled = true;
+            _heroTileMapRenderer.enabled = true;
         }
     }
 
     private void HideGroundLine()
     {
-        if (_groundLineTilemapRenderer)
+        if (_heroTileMapRenderer)
         {
-            _groundLineTilemapRenderer.enabled = false;
+            _heroTileMapRenderer.enabled = false;
         }
     }
     
     private void DrawLine(Vector3Int fromCell, Vector3Int toCell)
     {
-        Vector3 fromWorld = _tilemap.GetCellCenterWorld(fromCell);
-        Vector3 toWorld = _tilemap.GetCellCenterWorld(toCell);
+        Vector3 fromWorld = _heroTileMap.GetCellCenterWorld(fromCell);
+        Vector3 toWorld = _heroTileMap.GetCellCenterWorld(toCell);
         _lineDrawer.Draw(fromWorld, toWorld);
     }
 
     public HeroUnit SpawnHero()
     {
-        BoundsInt bounds = _tilemap.cellBounds;
+        BoundsInt bounds = _heroTileMap.cellBounds;
 
         for (int y = bounds.yMax - 1; y >= bounds.yMin; y--) // 위에서 아래로
         {
@@ -190,7 +197,7 @@ public class PlacementManager : Singleton<PlacementManager>
             {
                 Vector3Int cellPos = new Vector3Int(x, y, 0);
 
-                if (!_tilemap.HasTile(cellPos))
+                if (!_heroTileMap.HasTile(cellPos))
                 {
                     continue;
                 }
@@ -200,7 +207,7 @@ public class PlacementManager : Singleton<PlacementManager>
                     continue;
                 }
 
-                Vector3 worldPos = _tilemap.GetCellCenterWorld(cellPos);
+                Vector3 worldPos = _heroTileMap.GetCellCenterWorld(cellPos);
                 GameObject unitPrefab = _heroPrefabList[Random.Range(0, _heroPrefabList.Count)];
                 GameObject unitInstance = Instantiate(unitPrefab, worldPos, Quaternion.identity, _unitRoot);
                 _unitMap[cellPos] = unitInstance;
