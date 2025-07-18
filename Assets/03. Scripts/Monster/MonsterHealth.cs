@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class MonsterHealth : MonoBehaviour
 {
-    [SerializeField] protected float _maxHp = 100;
+    [SerializeField] protected float _maxHp;
     [SerializeField] protected float _currentHp;
     [SerializeField] protected float _deathAnimDuration = 0.22f; // Death 애니메이션 실행시간
     [SerializeField] protected int _money = 20;
@@ -50,7 +50,8 @@ public class MonsterHealth : MonoBehaviour
     public virtual void Initialize(int wave)
     {
         _wave = wave;
-        _currentHp = _wave * 50;
+        _maxHp = _wave * 50;
+        _currentHp = _maxHp;
     }
     public void TakeDamage(float dmg)
     {

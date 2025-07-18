@@ -30,7 +30,8 @@ public class BossHealth : MonsterHealth
     public override void Initialize(int wave)
     {
         _wave = wave;
-        _currentHp = _wave * 1000;
+        _maxHp = _wave * 1000;
+        _currentHp = _maxHp;
     }
 
     protected override void Die()
