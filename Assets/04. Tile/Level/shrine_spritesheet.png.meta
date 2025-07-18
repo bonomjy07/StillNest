@@ -209,7 +209,11 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      shrine_spritesheet_0: -5352576194121504097
+      shrine_spritesheet_1: 4526353482125408629
+      shrine_spritesheet_2: -1880419263952092836
+      shrine_spritesheet_3: -4953710027604895648
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

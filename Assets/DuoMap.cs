@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -26,6 +26,15 @@ public class DuoMap : MonoBehaviour
     [Header("[Highlight]")]
     public Tilemap selectHighlightTileMap;
 
+    [Header("[Spawn]")]
+    public Tilemap spawn1PlayerTileMap;
+    public Tilemap spawn2PlayerTileMap;
+
+    [Header("[Path]")]
+    public Tilemap path1PlayerTilemap;
+    public Tilemap path2PlayerTilemap;
+    public TileBase pathTile;
+
     private void Start()
     {
         // 멀티 적용전 꺼두기
@@ -50,5 +59,30 @@ public class DuoMap : MonoBehaviour
             1 => hero2PlayerTileMap.GetComponent<TilemapRenderer>(),
             _ => throw new ArgumentOutOfRangeException(nameof(playerIndex), playerIndex, null)
         };
+    }
+
+    public Tilemap GetSpawnTileMap(int playerIndex = 0)
+    {
+        return playerIndex switch
+        {
+            0 => spawn1PlayerTileMap,
+            1 => spawn2PlayerTileMap,
+            _ => throw new ArgumentOutOfRangeException(nameof(playerIndex), playerIndex, null)
+        };
+    }
+
+    public Tilemap GetPathTileMap(int playerIndex = 0)
+    {
+        return playerIndex switch
+        {
+            0 => path1PlayerTilemap,
+            1 => path2PlayerTilemap,
+            _ => throw new ArgumentOutOfRangeException(nameof(playerIndex), playerIndex, null)
+        };
+    }
+
+    public TileBase GetPathTileBase()
+    {
+        return pathTile;
     }
 }
