@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class PlacementManager : Singleton<PlacementManager>
+public class HeroPlacementController : MonoBehaviour
 {
     [Header("[Highlight]")]
     [SerializeField] private Tile _currentTileHighlight; // 유닛 선택 위치용
@@ -40,7 +40,7 @@ public class PlacementManager : Singleton<PlacementManager>
     {
         // Map Setting
         _grid = DuoMap.Inst.grid;
-        _heroTileMap = DuoMap.Inst.GetMyHeroTileMap();
+        //_heroTileMap = DuoMap.Inst.GetMyHeroTileMap();
         _heroTileMapRenderer = DuoMap.Inst.GetMyHeroTileMapRenderer();
         _selectTileMap = DuoMap.Inst.selectHighlightTileMap;
         
@@ -174,7 +174,7 @@ public class PlacementManager : Singleton<PlacementManager>
 
     private void HideGroundLine()
     {
-        if (_heroTileMapRenderer)
+        if (_heroTileMapRenderer && _heroTileMapRenderer.enabled)
         {
             _heroTileMapRenderer.enabled = false;
         }
@@ -185,6 +185,11 @@ public class PlacementManager : Singleton<PlacementManager>
         Vector3 fromWorld = _heroTileMap.GetCellCenterWorld(fromCell);
         Vector3 toWorld = _heroTileMap.GetCellCenterWorld(toCell);
         _lineDrawer.Draw(fromWorld, toWorld);
+    }
+
+    public void InitClientInfo(int playerIndex)
+    {
+        _heroTileMap = DuoMap.Inst.GetMyHeroTileMap(playerIndex);
     }
 
     public HeroUnit SpawnHero()

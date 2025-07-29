@@ -1,10 +1,12 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using FishNet.Object;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public partial class HeroUnit : MonoBehaviour
+public partial class HeroUnit : NetworkBehaviour
 {
     [Header("[Movement]")]
     [SerializeField] protected float _moveSpeed = 2f;
@@ -62,7 +64,7 @@ public partial class HeroUnit : MonoBehaviour
     {
         _animator.SetFloat(SpeedMultiplier, AttackSpeedMultiplier);
     }
-
+    
     protected virtual void Update()
     {
         UpdateCooldown();

@@ -33,6 +33,7 @@ public class PlayerManager : Singleton<PlayerManager>
 
 	public void SpawnHero()
 	{
+		/*
 		if (!CurrentPlayer)
 		{
 			return;
@@ -46,5 +47,7 @@ public class PlayerManager : Singleton<PlayerManager>
 		
 		CurrentPlayer.AddHero(hero);
 		CurrentPlayer.SpendMoney(20);
+		
+		*/
 	}
 }

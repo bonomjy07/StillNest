@@ -1,4 +1,6 @@
 using System;
+using FishNet.Managing;
+using FishNet.Managing.Client;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -43,10 +45,6 @@ public class MainHUD : MonoBehaviour
 
 	private void OnSpawnHeroButtonClicked()
 	{
-		Player currentPlayer = PlayerManager.Instance.CurrentPlayer;
-		if (currentPlayer && currentPlayer.HasEnoughMoney)
-		{
-			PlayerManager.Instance.SpawnHero();
-		}
+		GameEventHub.Instance.RaiseHeroSpawnClick();
 	}
 }

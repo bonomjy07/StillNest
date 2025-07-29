@@ -62,7 +62,6 @@ public class SpawnManager : Singleton<SpawnManager>
     {
         if (_monsterCount == _monsterLimit)
         {
-            Debug.Log("Game Over");
             _activeGame = false;
             // Game Over Logic Start!
         }

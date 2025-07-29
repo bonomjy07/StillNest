@@ -27,7 +27,7 @@ public class MonsterHealth : MonoBehaviour
     {
         
 
-        StartCoroutine(TempDotDamage()); // For Test
+        //StartCoroutine(TempDotDamage()); // For Test
     }
 
     // Update is called once per frame

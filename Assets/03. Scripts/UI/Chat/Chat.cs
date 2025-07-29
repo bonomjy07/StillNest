@@ -6,7 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class Chat : NetworkBehaviour
+public class Chat : MonoBehaviour
 {
     [Header("[Message Prefabs]")]
     [SerializeField]
@@ -28,47 +28,6 @@ public class Chat : NetworkBehaviour
     private void Awake()
     {
         Instance = this;
-        _inputField.onSubmit.AddListener(OnSubmit);
-        _submitButton.onClick.AddListener(() => OnSubmit(_inputField.text));
-    }
-
-    private void OnSubmit(string message)
-    {
-        Debug.Log($"[OnSubmit] IsServer={IsServer}, IsClient={IsClient}, IsOwner={IsOwner}");
-
-        if (string.IsNullOrWhiteSpace(message))
-        {
-            return;
-        }
-
-        SendChat();
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void SendChat()
-    {
-        Debug.Log($"Sending chat message on server");
-
-        string message = _inputField.text.Trim();
-        
-        BcastChatMessage(message);
-    }
-    
-    [ObserversRpc]
-    private void BcastChatMessage(string message)
-    {
-        // This method should be called on the server to broadcast the message to all clients
-        if (string.IsNullOrWhiteSpace(message))
-        {
-            return;
-        }
-
-        // Here we would typically use a NetworkManager or similar to send the message to all clients
-        // For now, we will just call AddMessage on all clients
-        AddMessage(message, IsOwner);
-        
-        _inputField.text = string.Empty;
-        _inputField.ActivateInputField();
     }
 
     public void AddMessage(string message, bool isMyMessage)
@@ -91,13 +50,5 @@ public class Chat : NetworkBehaviour
         {
             Destroy(chatElement.gameObject);
         }
-    }
-
-    [Server]
-    public void AssignOwnership(NetworkConnection conn)
-    {
-
-        NetworkObject.GiveOwnership(conn);
-        Debug.Log($"[Chat] Ownership assigned to client {conn.ClientId}");
     }
 }

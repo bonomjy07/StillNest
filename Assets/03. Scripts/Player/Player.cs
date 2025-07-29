@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
+using FishNet.Object;
 using UniRx;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class Player : MonoBehaviour
+public class Player : NetworkBehaviour
 {
 	public ReactiveProperty<int> Money { get; } = new();
 
