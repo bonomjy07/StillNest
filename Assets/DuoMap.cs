@@ -36,8 +36,11 @@ public class DuoMap : MonoBehaviour
 
     private void Start()
     {
-        // 멀티 적용전 꺼두기
-        hero2PlayerTileMap.gameObject.SetActive(false);
+        // Placementcontroller에서 차피 킴.
+        hero1PlayerTileMap.GetComponent<TilemapRenderer>()
+                          .enabled = false;
+        hero2PlayerTileMap.GetComponent<TilemapRenderer>()
+                          .enabled = false;
     }
 
     public Tilemap GetMyHeroTileMap(int playerIndex = 0)
