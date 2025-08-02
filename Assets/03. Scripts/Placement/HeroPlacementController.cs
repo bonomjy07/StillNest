@@ -1,8 +1,14 @@
+using System;
 using System.Collections.Generic;
+using FishNet.Connection;
+using FishNet.Object;
+using FishNet.Object.Synchronizing;
+using UnityEditor.ShortcutManagement;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using Random = UnityEngine.Random;
 
-public class HeroPlacementController : MonoBehaviour
+public class HeroPlacementController : MonoBehaviour//NetworkBehaviour
 {
     [Header("[Highlight]")]
     [SerializeField] private Tile _currentTileHighlight; // 유닛 선택 위치용
@@ -15,7 +21,6 @@ public class HeroPlacementController : MonoBehaviour
     [SerializeField] private DottedLineDrawer _lineDrawer;
 
     [Header("유닛 설정")]
-    [SerializeField] private Transform _unitRoot;
     [SerializeField] private List<GameObject> _heroPrefabList;
 
     // 영웅 배치
@@ -26,7 +31,6 @@ public class HeroPlacementController : MonoBehaviour
     private TilemapRenderer _heroTileMapRenderer;
     private Tilemap _selectTileMap;
     
-    [SerializeField]// 디버깅용으로 추가
     private Dictionary<Vector3Int, GameObject> _unitMap = new();
 
     // 유닛선택
@@ -37,7 +41,7 @@ public class HeroPlacementController : MonoBehaviour
     private Vector3Int? _selectedCell;
     private Vector3Int? _targetCell;
 
-    private void Start()
+    private void Awake()
     {
         // Map Setting
         _grid = DuoMap.Inst.grid;
@@ -112,8 +116,8 @@ public class HeroPlacementController : MonoBehaviour
     private bool IsEmptyTile(Vector3Int cellPos)
     {
         TileBase currentTile = _heroTileMap.GetTile(cellPos);
-        return  currentTile && !_unitMap.ContainsKey(cellPos);
-        //return _placeableTiles.Contains(currentTile) && !_unitMap.ContainsKey(cellPos);
+        bool isEmpty = currentTile != null && !_unitMap.ContainsKey(cellPos);
+        return isEmpty;
     }
 
     private void SelectCell(Vector3Int cellPos)
@@ -192,7 +196,7 @@ public class HeroPlacementController : MonoBehaviour
         _heroTileMapRenderer = DuoMap.Inst.GetMyHeroTileMapRenderer(playerIndex);
     }
 
-    public HeroUnit SpawnHero()
+    public HeroUnit InstantiateHero()
     {
         BoundsInt bounds = _heroTileMap.cellBounds;
 
@@ -214,13 +218,19 @@ public class HeroPlacementController : MonoBehaviour
 
                 Vector3 worldPos = _heroTileMap.GetCellCenterWorld(cellPos);
                 GameObject unitPrefab = _heroPrefabList[Random.Range(0, _heroPrefabList.Count)];
-                GameObject unitInstance = Instantiate(unitPrefab, worldPos, Quaternion.identity, _unitRoot);
-                _unitMap[cellPos] = unitInstance;
-
-                return unitInstance.GetComponent<HeroUnit>();
+                GameObject unitInstance = Instantiate(unitPrefab, worldPos, Quaternion.identity);
+                
+                HeroUnit unit = unitInstance.GetComponent<HeroUnit>();
+                return unit;
             }
         }
 
         return null;
+    }
+
+    public void AddSpawnedUnit(GameObject unit)
+    {
+        Vector3Int cellPos = _grid.WorldToCell(unit.transform.position);
+        _unitMap[cellPos] = unit;
     }
 }

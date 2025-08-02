@@ -2,60 +2,62 @@ using System;
 using System.Collections.Generic;
 using FishNet.Connection;
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using UniRx;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class CoopPlayer : NetworkBehaviour
 {
-    public static CoopPlayer Instance { get; private set; }
-    
-    public int Money { get; }
-    public int Name { get; }
-
-    private List<HeroUnit> _heroUnits = new();
-    
+    [Header("[Spawn Hero]")]
     [SerializeField] private HeroPlacementController _placementController;
+    [SerializeField] private NetworkObject _heroesRoot;
+
+    private readonly SyncList<HeroUnit> _heroList = new();
 
     public override void OnStartClient()
     {
         base.OnStartClient();
-        Debug.Log($"[meng] Coop Player is started. id is {Owner.ClientId}. IsOwner: {IsOwner}");
+        
+        name += $" ID:{Owner.ClientId}";
 
-        if (IsOwner)
+        int playerIndex = Owner.IsHost ? 0 : 1;
+        _placementController.SetPlayerIndex(playerIndex);
+        
+        if (!IsOwner)
         {
-            Instance = this;
-            
-            // Subscribe to the hero spawn button click event
-            GameEventHub.Instance
-                        .OnHeroSpawnButtonClick
-                        .Subscribe(unit => SpawnHero(Owner))
-                        .AddTo(this);
-        }
-        else
-        { 
-            // Update()문 안돌게 (이런 방법은 딱히)
-            // 그냥 애도 네트워크로 뺴는게;
             _placementController.enabled = false;
+            return;
         }
 
-        name = name + $", Id:{OwnerId}";
+        // Subscribe to the hero spawn button click event
+        GameEventHub.Instance
+                    .OnHeroSpawnButtonClick
+                    .Subscribe(unit => SpawnHeroServerRpc(Owner))
+                    .AddTo(this);
     }
 
     [ServerRpc]
-    private void SpawnHero(NetworkConnection sender)
+    private void SpawnHeroServerRpc(NetworkConnection conn)
     {
-        if (!IsServerInitialized)
+        HeroUnit heroUnit = _placementController.InstantiateHero();
+        if (!heroUnit)
         {
             return;
         }
         
-        int playerIndex = sender != null && sender.IsHost ? 0 : 1;
-        _placementController.SetPlayerIndex(playerIndex);
+        Spawn(heroUnit.gameObject, conn);
+        heroUnit.NetworkObject.SetParent(_heroesRoot);
+        
+        // Cache the heroes
+        _heroList.Add(heroUnit);
+        // cache heroes location
+        AddSpawnedUnit(heroUnit);
+    }
 
-        HeroUnit heroUnit = _placementController.SpawnHero();
-        if (heroUnit)
-        {
-            Spawn(heroUnit.gameObject, sender);
-        }
+    [ObserversRpc]
+    private void AddSpawnedUnit(HeroUnit heroUnit)
+    {
+        _placementController.AddSpawnedUnit(heroUnit.gameObject);
     }
 }

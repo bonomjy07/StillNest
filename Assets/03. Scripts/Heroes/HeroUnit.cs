@@ -62,9 +62,15 @@ public partial class HeroUnit : NetworkBehaviour
 
     private void Start()
     {
-        _animator.SetFloat(SpeedMultiplier, AttackSpeedMultiplier);
+        //  이 스피드 값 사라졌나봐 저장안된듯.
+        //_animator.SetFloat(SpeedMultiplier, AttackSpeedMultiplier);
     }
-    
+
+    public override void OnStartNetwork()
+    {
+        name += $",{ObjectId}";
+    }
+
     protected virtual void Update()
     {
         UpdateCooldown();
