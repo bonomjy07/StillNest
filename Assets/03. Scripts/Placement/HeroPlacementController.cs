@@ -26,6 +26,7 @@ public class HeroPlacementController : MonoBehaviour
     private TilemapRenderer _heroTileMapRenderer;
     private Tilemap _selectTileMap;
     
+    [SerializeField]// 디버깅용으로 추가
     private Dictionary<Vector3Int, GameObject> _unitMap = new();
 
     // 유닛선택
@@ -40,8 +41,6 @@ public class HeroPlacementController : MonoBehaviour
     {
         // Map Setting
         _grid = DuoMap.Inst.grid;
-        //_heroTileMap = DuoMap.Inst.GetMyHeroTileMap();
-        _heroTileMapRenderer = DuoMap.Inst.GetMyHeroTileMapRenderer();
         _selectTileMap = DuoMap.Inst.selectHighlightTileMap;
         
         // Highlight Color
@@ -187,9 +186,10 @@ public class HeroPlacementController : MonoBehaviour
         _lineDrawer.Draw(fromWorld, toWorld);
     }
 
-    public void InitClientInfo(int playerIndex)
+    public void SetPlayerIndex(int playerIndex)
     {
         _heroTileMap = DuoMap.Inst.GetMyHeroTileMap(playerIndex);
+        _heroTileMapRenderer = DuoMap.Inst.GetMyHeroTileMapRenderer(playerIndex);
     }
 
     public HeroUnit SpawnHero()
