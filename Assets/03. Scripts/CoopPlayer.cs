@@ -30,11 +30,15 @@ public class CoopPlayer : NetworkBehaviour
                         .OnHeroSpawnButtonClick
                         .Subscribe(unit => SpawnHero(Owner))
                         .AddTo(this);
-
-            // 왼쪽? 오른쪽?
-            int playerIndex = IsServerInitialized ? 0 : 1;
-            _placementController.InitClientInfo(playerIndex);
         }
+        else
+        { 
+            // Update()문 안돌게 (이런 방법은 딱히)
+            // 그냥 애도 네트워크로 뺴는게;
+            _placementController.enabled = false;
+        }
+
+        name = name + $", Id:{OwnerId}";
     }
 
     [ServerRpc]
@@ -46,12 +50,12 @@ public class CoopPlayer : NetworkBehaviour
         }
         
         int playerIndex = sender != null && sender.IsHost ? 0 : 1;
-        _placementController.InitClientInfo(playerIndex);
+        _placementController.SetPlayerIndex(playerIndex);
 
         HeroUnit heroUnit = _placementController.SpawnHero();
         if (heroUnit)
         {
-            Spawn(heroUnit.gameObject, Owner);
+            Spawn(heroUnit.gameObject, sender);
         }
     }
 }
