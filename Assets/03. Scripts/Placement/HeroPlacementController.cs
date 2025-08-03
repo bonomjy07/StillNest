@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
+
 using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
-using UnityEditor.ShortcutManagement;
+
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Tilemaps;
+
 using Random = UnityEngine.Random;
 
-public class HeroPlacementController : MonoBehaviour//NetworkBehaviour
+public class HeroPlacementController : NetworkBehaviour
 {
     [Header("[Highlight]")]
     [SerializeField] private Tile _currentTileHighlight; // 유닛 선택 위치용
@@ -94,16 +97,22 @@ public class HeroPlacementController : MonoBehaviour//NetworkBehaviour
     private void MoveUnit(GameObject unitObject, Vector3Int from, Vector3Int to)
     {
         Vector3 worldPos = _heroTileMap.GetCellCenterWorld(to);
+        MoveUnitServerRpc(unitObject, worldPos);
 
+        _unitMap.Remove(from);
+        _unitMap[to] = unitObject;
+        
+        Debug.Log($"유닛 이동 요청: {from} → {to}");
+    }
+    
+    [ServerRpc]
+    private void MoveUnitServerRpc(GameObject unitObject, Vector3 worldPos)
+    {
         HeroUnit unit = unitObject.GetComponent<HeroUnit>();
         if (unit) 
         {
             unit.MoveTo(worldPos);
         }
-
-        _unitMap.Remove(from);
-        _unitMap[to] = unitObject;
-        Debug.Log($"유닛 이동 완료: {from} → {to}");
     }
 
     private Vector3Int GetMouseCellPosition()
