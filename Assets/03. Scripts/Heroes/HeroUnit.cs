@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -23,14 +24,17 @@ public partial class HeroUnit : NetworkBehaviour
 
     protected HeroState State
     {
-        get => _state;
+        get => _syncState.Value;
         private set
         {
-            _state = value;
-            _animator.SetInteger(HeroStateParamId, (int)value);
+            if (IsServerInitialized)
+            {
+                _syncState.Value = value;
+            }
         }
     }
-    private HeroState _state = HeroState.Idle;
+
+    private readonly SyncVar<HeroState> _syncState = new(); 
     
     // Components
     protected Animator _animator;
@@ -63,8 +67,16 @@ public partial class HeroUnit : NetworkBehaviour
     public override void OnStartNetwork()
     {
         name += $",{ObjectId}";
+        
+        _syncState.OnChange += OnStateChange;
     }
 
+
+    private void OnStateChange(HeroState prev, HeroState next, bool asServer)
+    {
+        _animator.SetInteger(HeroStateParamId, (int)next);
+    }
+    
     protected virtual void Update()
     {
         UpdateCooldown();
@@ -196,6 +208,7 @@ public partial class HeroUnit : NetworkBehaviour
         transform.position += -direction.normalized * (_moveSpeed * Time.deltaTime);
     }
 
+    [Server]
     public void MoveTo(Vector3 worldPosition)
     {
         if (State == HeroState.Attacking)
