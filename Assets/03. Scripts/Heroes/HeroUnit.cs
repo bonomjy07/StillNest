@@ -60,12 +60,6 @@ public partial class HeroUnit : NetworkBehaviour
         _animationEventHandler.onAttackAnimationEnd += OnAttackAnimEnd;
     }
 
-    private void Start()
-    {
-        //  이 스피드 값 사라졌나봐 저장안된듯.
-        //_animator.SetFloat(SpeedMultiplier, AttackSpeedMultiplier);
-    }
-
     public override void OnStartNetwork()
     {
         name += $",{ObjectId}";
@@ -75,20 +69,22 @@ public partial class HeroUnit : NetworkBehaviour
     {
         UpdateCooldown();
         
-        switch (_state)
+        UpdateMovement();
+        
+        switch (State)
         {
             case HeroState.Idle:
             {
                 if (TryFindTarget(out var target) && _cooldownTimer <= 0f)
                 {
-                    StartAttack(target);
+                    //StartAttack(target);
                 }
                 break;
             } 
             
             case HeroState.Moving:
             {
-                UpdateMovement();
+                // 굳이 이때만 업데이트할 ㅣㅍㄹ요가 있을까 ??
                 break;
             }
             
@@ -97,7 +93,7 @@ public partial class HeroUnit : NetworkBehaviour
                 if (_currentTarget)
                 {
                     Vector3 direction = (_currentTarget.position - transform.position).normalized;
-                    UpdateFacing(direction);
+                    //UpdateFacing(direction);
                 }
                 break;
             }
@@ -182,6 +178,11 @@ public partial class HeroUnit : NetworkBehaviour
 
     private void UpdateMovement()
     {
+        if (!IsServerInitialized)
+        {
+            return;
+        }
+        
         Vector3 direction = transform.position - _destination;
         float distance = direction.magnitude;
 

@@ -11,7 +11,7 @@ using UnityEngine.Tilemaps;
 
 using Random = UnityEngine.Random;
 
-public class HeroPlacementController : NetworkBehaviour
+public class HeroPlacementController : MonoBehaviour //NetworkBehaviour
 {
     [Header("[Highlight]")]
     [SerializeField] private Tile _currentTileHighlight; // 유닛 선택 위치용
@@ -26,6 +26,8 @@ public class HeroPlacementController : NetworkBehaviour
     [Header("유닛 설정")]
     [SerializeField] private List<GameObject> _heroPrefabList;
 
+    public UnityAction<HeroUnit, Vector3Int, Vector3Int, Vector3> OnMoveTo;
+    
     // 영웅 배치
     private Grid _grid;
     private Tilemap _heroTileMap;
@@ -97,7 +99,8 @@ public class HeroPlacementController : NetworkBehaviour
     private void MoveUnit(GameObject unitObject, Vector3Int from, Vector3Int to)
     {
         Vector3 worldPos = _heroTileMap.GetCellCenterWorld(to);
-        MoveUnitServerRpc(unitObject, worldPos);
+        
+        OnMoveTo?.Invoke(unitObject.GetComponent<HeroUnit>(), from, to, worldPos);
 
         _unitMap.Remove(from);
         _unitMap[to] = unitObject;
@@ -105,16 +108,6 @@ public class HeroPlacementController : NetworkBehaviour
         Debug.Log($"유닛 이동 요청: {from} → {to}");
     }
     
-    [ServerRpc]
-    private void MoveUnitServerRpc(GameObject unitObject, Vector3 worldPos)
-    {
-        HeroUnit unit = unitObject.GetComponent<HeroUnit>();
-        if (unit) 
-        {
-            unit.MoveTo(worldPos);
-        }
-    }
-
     private Vector3Int GetMouseCellPosition()
     {
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);

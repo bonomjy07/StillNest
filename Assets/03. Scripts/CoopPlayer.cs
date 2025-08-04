@@ -15,6 +15,22 @@ public class CoopPlayer : NetworkBehaviour
 
     private readonly SyncList<HeroUnit> _heroList = new();
 
+    private void Awake()
+    {
+        _placementController.OnMoveTo = HandleOnMoveTo;
+    }
+
+    private void HandleOnMoveTo(HeroUnit hero, Vector3Int from, Vector3Int to, Vector3 worldPos)
+    {
+        MoveToServerRpc(hero, worldPos);
+    }
+
+    [ServerRpc]
+    private void MoveToServerRpc(HeroUnit hero, Vector3 worldPos)
+    {
+        hero.MoveTo(worldPos);
+    }
+
     public override void OnStartClient()
     {
         base.OnStartClient();
