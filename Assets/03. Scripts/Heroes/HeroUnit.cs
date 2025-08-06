@@ -190,7 +190,8 @@ public partial class HeroUnit : NetworkBehaviour
 
     private void UpdateMovement()
     {
-        if (!IsServerInitialized)
+        // 예측이동 허용
+        if (!IsServerInitialized && !IsOwner)
         {
             return;
         }
@@ -221,6 +222,11 @@ public partial class HeroUnit : NetworkBehaviour
 
         Vector3 moveDir = worldPosition - transform.position;
         UpdateFacing(moveDir);
+    }
+
+    public void SetDestination(Vector3 worldPosition)
+    {
+        _destination = worldPosition;
     }
  
     private void UpdateFacing(Vector3 moveDir)

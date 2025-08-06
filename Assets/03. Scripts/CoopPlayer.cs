@@ -29,6 +29,14 @@ public class CoopPlayer : NetworkBehaviour
     private void MoveToServerRpc(HeroUnit hero, Vector3 worldPos)
     {
         hero.MoveTo(worldPos);
+        
+        MoveToObserverRpc(hero, worldPos);
+    }
+    
+    [ObserversRpc]
+    private void MoveToObserverRpc(HeroUnit hero, Vector3 worldPos)
+    {
+        hero.SetDestination(worldPos);
     }
 
     public override void OnStartClient()
