@@ -22,21 +22,21 @@ public class CoopPlayer : NetworkBehaviour
 
     private void HandleOnMoveTo(HeroUnit hero, Vector3Int from, Vector3Int to, Vector3 worldPos)
     {
-        MoveToServerRpc(hero, worldPos);
+        hero.MoveTo(worldPos);
+        
+        //MoveToServerRpc(hero, worldPos);
     }
 
     [ServerRpc]
     private void MoveToServerRpc(HeroUnit hero, Vector3 worldPos)
     {
-        hero.MoveTo(worldPos);
-        
         MoveToObserverRpc(hero, worldPos);
     }
     
     [ObserversRpc]
     private void MoveToObserverRpc(HeroUnit hero, Vector3 worldPos)
     {
-        hero.SetDestination(worldPos);
+        hero.MoveTo(worldPos);
     }
 
     public override void OnStartClient()

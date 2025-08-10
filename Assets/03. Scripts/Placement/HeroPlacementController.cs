@@ -219,7 +219,8 @@ public class HeroPlacementController : MonoBehaviour //NetworkBehaviour
                 }
 
                 Vector3 worldPos = _heroTileMap.GetCellCenterWorld(cellPos);
-                GameObject unitPrefab = _heroPrefabList[Random.Range(0, _heroPrefabList.Count)];
+                GameObject unitPrefab = _heroPrefabList[1]; // 일단 ㅜ어리어만
+                //GameObject unitPrefab = _heroPrefabList[Random.Range(0, _heroPrefabList.Count)];
                 GameObject unitInstance = Instantiate(unitPrefab, worldPos, Quaternion.identity);
                 
                 HeroUnit unit = unitInstance.GetComponent<HeroUnit>();

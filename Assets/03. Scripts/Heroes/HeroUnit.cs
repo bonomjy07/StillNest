@@ -2,10 +2,13 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using FishNet.Object;
+using FishNet.Object.Prediction;
 using FishNet.Object.Synchronizing;
+using FishNet.Transporting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+
 
 public partial class HeroUnit : NetworkBehaviour
 {
@@ -24,17 +27,17 @@ public partial class HeroUnit : NetworkBehaviour
 
     protected HeroState State
     {
-        get => _syncState.Value;
+        get => _syncState;
         private set
         {
-            if (IsServerInitialized)
             {
-                _syncState.Value = value;
+                _syncState = value;
             }
         }
     }
 
-    private readonly SyncVar<HeroState> _syncState = new(); 
+    private HeroState _syncState;
+    //private readonly SyncVar<HeroState> _syncState = new(); 
     
     // Components
     protected Animator _animator;
@@ -42,7 +45,11 @@ public partial class HeroUnit : NetworkBehaviour
     
     // Movement
     protected const float STOP_THRESHOLD = 0.05f;
+    
+    [SerializeField]
     protected Vector3 _destination;
+    [SerializeField]
+    private bool _hasDestination;
     
     // Attack
     protected Transform _currentTarget;
@@ -57,31 +64,101 @@ public partial class HeroUnit : NetworkBehaviour
 
     protected virtual void Awake()
     {
-        _animator = GetComponent<Animator>();
-        _spriteRenderer = GetComponent<SpriteRenderer>();
-        _destination = transform.position;
+        _animator = GetComponentInChildren<Animator>();
+        _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         
         _animationEventHandler.onAttackAnimationEnd += OnAttackAnimEnd;
     }
 
+    private void Start()
+    {
+        _destination = transform.position;
+    }
+
     public override void OnStartNetwork()
     {
-        name += $",{ObjectId}";
+        name += $",id:{ObjectId}, owner:{OwnerId}";
         
-        _syncState.OnChange += OnStateChange;
+        TimeManager.OnTick += TimeManager_OnTick;
     }
 
-
-    private void OnStateChange(HeroState prev, HeroState next, bool asServer)
+    public override void OnStopNetwork()
     {
-        _animator.SetInteger(HeroStateParamId, (int)next);
+        TimeManager.OnTick -= TimeManager_OnTick;
+    }
+
+    private void TimeManager_OnTick()
+    {
+        //if (IsOwner)
+        {
+            RunInputs(CreateReplicateData());
+        }
+
+        if (IsServerInitialized)
+        {
+            CreateReconcile();
+        }
     }
     
+    private ReplicateData CreateReplicateData()
+    {
+        if (!IsOwner)
+        {
+            return default;
+        }
+        return new ReplicateData(_destination, _hasDestination);
+    }
+    
+    [Replicate]
+    private void RunInputs(ReplicateData data, ReplicateState state = ReplicateState.Invalid, Channel channel = Channel.Unreliable)
+    {
+        if (!data.HasDestination)
+        {
+            return;
+        }
+        
+        Debug.LogError($"[RunInputs][{name}] is moving to {data.Destination}");
+        
+        Vector3 dir = data.Destination - transform.position;
+        float dist = dir.magnitude;
+
+        if (dist < STOP_THRESHOLD)
+        {
+            transform.position = data.Destination;
+            _hasDestination = false;
+            return;
+        }
+
+        float step = _moveSpeed * (float)TimeManager.TickDelta;
+        if (step >= dist)
+        {
+            transform.position = data.Destination;
+            _hasDestination = false;
+            return;
+        }
+        
+        transform.position += (dir / dist) * step;
+    }
+
+    public override void CreateReconcile()
+    {
+        ReconcileData rd = new ReconcileData(transform.position);
+        PerformReconcile(rd);
+    }
+    
+    [Reconcile]
+    private void PerformReconcile(ReconcileData rd, Channel channel = Channel.Unreliable)
+    {
+        transform.position = rd.Position;
+        Debug.LogError($"[Reconcile] rd.position is {rd.Position}");
+    }
+
     protected virtual void Update()
     {
         UpdateCooldown();
         
-        UpdateMovement();
+        // 예측 이동 테스트 중
+        //UpdateMovement();
         
         switch (State)
         {
@@ -209,50 +286,77 @@ public partial class HeroUnit : NetworkBehaviour
         transform.position += -direction.normalized * (_moveSpeed * Time.deltaTime);
     }
 
-    [Server]
+    public bool moveToControl;
+    
     public void MoveTo(Vector3 worldPosition)
     {
-        if (State == HeroState.Attacking)
-        {
-            CancelAttack();
-        }
-
         State = HeroState.Moving;
+        
         _destination = worldPosition;
+        _hasDestination = true;
+        
+        Debug.LogError($"Moveto() worldPosition:{worldPosition}");
 
         Vector3 moveDir = worldPosition - transform.position;
         UpdateFacing(moveDir);
     }
 
-    public void SetDestination(Vector3 worldPosition)
-    {
-        _destination = worldPosition;
-    }
- 
     private void UpdateFacing(Vector3 moveDir)
     {
         _spriteRenderer.flipX = moveDir.x < 0;
-    }
-    
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, _attackRange);
-        
-#if UNITY_EDITOR
-        Handles.color = Color.white;
-        Handles.Label(transform.position + Vector3.up * 1.5f, $"스테이트: {State}");
-#endif
     }
 }
 
 public partial class HeroUnit
 {
-    protected enum HeroState
+    public enum HeroState
     {
         Idle       = 0,
         Moving     = 1,
         Attacking  = 2,
+    }
+    
+    public struct ReplicateData : IReplicateData
+    {
+        public Vector3 Destination;
+        public bool HasDestination;
+
+        public ReplicateData(Vector3 destination, bool hasDestination) : this()
+        {
+            Destination = destination;
+            HasDestination = hasDestination;
+        }
+        
+        private uint _tick;
+        public void Dispose() { }
+        public uint GetTick() => _tick;
+        public void SetTick(uint value) => _tick = value;
+    }
+
+    public struct ReconcileData : IReconcileData
+    {
+        public Vector3 Position;
+        
+        public ReconcileData(Vector3 position) : this()
+        {
+            Position = position;
+        }
+
+        private uint _tick;
+        public void Dispose() { }
+        public uint GetTick() => _tick;
+        public void SetTick(uint value) => _tick = value;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, _attackRange);
+
+#if UNITY_EDITOR
+        Handles.color = Color.white;
+        Handles.Label(transform.position + Vector3.up * 1.5f, $"스테이트: {State}");
+#endif
     }
 }
  
