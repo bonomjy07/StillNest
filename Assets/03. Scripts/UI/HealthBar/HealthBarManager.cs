@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -19,4 +19,7 @@ public class HealthBarManager : Singleton<HealthBarManager>
     public HealthBar Spawn() => _pool.Get();
     
     public void Despawn(HealthBar bar) => _pool.Release(bar);
+
+    public void ResetSetting() => _pool.ReleaseAll();
+
 }

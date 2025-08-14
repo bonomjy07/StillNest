@@ -35,8 +35,10 @@ public class GameInfoUIManager : MonoBehaviour
 
         if (curCount > maxCount - 10) // 최대치 임박
             _monsterCountText.color = Color.red;
+        else
+            _monsterCountText.color = colorGreen;
 
-        _monsterCountText.text = $"{curCount} / {maxCount}";
+            _monsterCountText.text = $"{curCount} / {maxCount}";
     }
 
     public void UpdateTime(float time)

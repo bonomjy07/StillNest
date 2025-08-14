@@ -7,7 +7,7 @@ public class BossHealth : MonsterHealth
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        StartCoroutine(TempDotDamage());
+        //StartCoroutine(TempDotDamage());
     }
 
     // Update is called once per frame
@@ -25,6 +25,8 @@ public class BossHealth : MonsterHealth
         _bossMoving = GetComponent<BossMoving>();
         _animator = GetComponent<Animator>();
         _isDead = false;
+        balanceData = Resources.Load<GameBalanceData>("ScriptableObjects/GameBalanceData");
+        _money = balanceData.bossKillGold;
     }
 
     public override void Initialize(int wave)
@@ -46,7 +48,7 @@ public class BossHealth : MonsterHealth
         _animator.SetTrigger(DeathClipId);
         yield return new WaitForSeconds(_deathAnimDuration);
         
-        _spawnManager.OnMonsterDeath(1);
+        _spawnManager.OnMonsterDeath(gameObject, MonsterType.Boss);
         Destroy(gameObject);
     }
 }

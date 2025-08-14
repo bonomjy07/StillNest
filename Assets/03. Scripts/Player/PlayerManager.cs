@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UniRx;
 using UnityEngine;
@@ -6,12 +6,14 @@ using UnityEngine;
 public class PlayerManager : Singleton<PlayerManager>
 {
 	public Player CurrentPlayer { get; private set; }
+    public GameBalanceData balanceData;
 
-	protected override void Awake()
+    protected override void Awake()
 	{
 		base.Awake();
 
-		CurrentPlayer = GetComponent<Player>();
+        balanceData = Resources.Load<GameBalanceData>("ScriptableObjects/GameBalanceData");
+        CurrentPlayer = GetComponent<Player>();
 		if (!CurrentPlayer)
 		{
 			CurrentPlayer = gameObject.AddComponent<Player>();
@@ -45,6 +47,6 @@ public class PlayerManager : Singleton<PlayerManager>
 		}
 		
 		CurrentPlayer.AddHero(hero);
-		CurrentPlayer.SpendMoney(20);
+		CurrentPlayer.SpendMoney(balanceData.heroCost);
 	}
 }

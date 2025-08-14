@@ -20,8 +20,6 @@ public class MonsterMoving : MonoBehaviour
 
     private SpawnManager _spawnManager;
 
-    //public Vector3Int bb;
-
     protected int _turnIndex = 0;
     protected Vector2[] _turnPos;
     protected float _generalMonsterOffsetY = 0.14f;
@@ -59,11 +57,6 @@ public class MonsterMoving : MonoBehaviour
         _pathTile = DuoMap.Inst.GetPathTileBase();
         SetTurnPos(_playerNumber, _monsterType);
     }
-
-    //public void SetTilemap(Tilemap tilemapParameter)
-    //{
-    //    _tilemap = tilemapParameter;
-    //}
 
     protected virtual void SetTurnPos(PlayerNumber player, MonsterType type)
     {
@@ -144,6 +137,11 @@ public class MonsterMoving : MonoBehaviour
     public void NoticeMonsterDeath()
     {
         _isDead = true;
+    }
+
+    public MonsterType GetMonsterType()
+    {
+        return _monsterType;
     }
 }
 

@@ -19,6 +19,8 @@ public class MonsterHealth : MonoBehaviour
     protected static readonly int TakeHitClipId = Animator.StringToHash("TakeHit");
     protected static readonly int DeathClipId = Animator.StringToHash("Death");
 
+    public GameBalanceData balanceData;
+
     public bool IsDead => _currentHp <= 0;
     public int Money => _money; // or _wave * 10;
 
@@ -27,7 +29,7 @@ public class MonsterHealth : MonoBehaviour
     {
         
 
-        StartCoroutine(TempDotDamage()); // For Test
+        //StartCoroutine(TempDotDamage()); // For Test
     }
 
     // Update is called once per frame
@@ -45,12 +47,15 @@ public class MonsterHealth : MonoBehaviour
         _monsterMoving = GetComponent<MonsterMoving>();
         _animator = GetComponent<Animator>();
         _isDead = false;
+        balanceData = Resources.Load<GameBalanceData>("ScriptableObjects/GameBalanceData");
+        _money = balanceData.monsterKillGold;
     }
 
     public virtual void Initialize(int wave)
     {
         _wave = wave;
-        _maxHp = _wave * 50;
+        //_maxHp = _wave * 50;
+        _maxHp = 50 + (_wave - 1) * 20;
         _currentHp = _maxHp;
     }
     public void TakeDamage(float dmg)
@@ -110,7 +115,7 @@ public class MonsterHealth : MonoBehaviour
         
         yield return new WaitForSeconds(_deathAnimDuration);
         // Notice to Spawn Manager
-        _spawnManager.OnMonsterDeath(0);
+        _spawnManager.OnMonsterDeath(gameObject, MonsterType.General);
         Destroy(gameObject);
         
         HideHealthBar();

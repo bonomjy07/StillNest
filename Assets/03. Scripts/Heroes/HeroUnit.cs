@@ -10,7 +10,7 @@ public partial class HeroUnit : MonoBehaviour
     [SerializeField] protected float _moveSpeed = 2f;
     
     [Header("[Attack]")]
-    [SerializeField] protected int _damageAmount = 10;
+    [SerializeField] protected int _damageAmount = 30;
     [SerializeField] protected float _attackCooldown = 1.0f;
     [SerializeField] protected float _attackRange = 10f;
     [SerializeField] protected float AttackSpeedMultiplier = 1.0f;

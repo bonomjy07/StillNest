@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -11,9 +11,12 @@ public class MainHUD : MonoBehaviour
 	public Button spawnHeroButton;
 	public TMP_Text moneyText;
 
-	private void Awake()
+    public GameBalanceData balanceData;
+
+    private void Awake()
 	{
-		Init();
+		balanceData = Resources.Load<GameBalanceData>("ScriptableObjects/GameBalanceData");
+        Init();
 	}
 
 	private void Init()
@@ -34,7 +37,7 @@ public class MainHUD : MonoBehaviour
 		if (spawnHeroButton)
 		{
 			currentPlayer.Money
-			             .Subscribe(money => spawnHeroButton.interactable = money >= 20)
+			             .Subscribe(money => spawnHeroButton.interactable = money >= balanceData.heroCost)
 			             .AddTo(this);
 			
 			spawnHeroButton.onClick.AddListener(OnSpawnHeroButtonClicked);

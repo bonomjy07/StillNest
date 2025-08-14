@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Tilemaps;
@@ -26,6 +27,7 @@ public class SpawnManager : Singleton<SpawnManager>
     private int _monsterLimit = 100;
     private bool _activeGame = true; // 이건 임시로 여기서만 쓸건데 전체 게임오버와 관련된 변수로 나중에 해줘야할듯
     private bool _bossAlive;
+    private int _bossCount = 0;
 
     private int _currentWave = 1;
     [SerializeField] private int _endWave = 50; // 50웨이브 까지 존재
@@ -36,6 +38,9 @@ public class SpawnManager : Singleton<SpawnManager>
     private float _playerTerms = 0.25f; // 플레이어간의 스폰텀
 
     public UnityAction<int /*Money*/> onMonsterDeath; // 몬스터가 죽었을 때 호출되는 이벤트 (TODO 어떤 몬스터가 죽었는지 넘겨줘야할듯)
+    private List<GameObject> _spawnedMonsterList = new List<GameObject>();
+    private List<GameObject> _spawnedBossList = new List<GameObject>();
+    public GameBalanceData balanceData;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -53,6 +58,7 @@ public class SpawnManager : Singleton<SpawnManager>
         Debug.Log($"Boss Spawn Position 2 : ({_bossSpawnPosition2.x}, {_bossSpawnPosition2.y})");
 
         gameInfoUIManager = GameObject.Find("Game Manager").GetComponent<GameInfoUIManager>();
+        balanceData = Resources.Load<GameBalanceData>("ScriptableObjects/GameBalanceData");
 
         StartCoroutine(SpawnLoop());
     }
@@ -60,11 +66,12 @@ public class SpawnManager : Singleton<SpawnManager>
     // Update is called once per frame
     void Update()
     {
-        if (_monsterCount == _monsterLimit)
+        if (_monsterCount >= _monsterLimit && GameManager.Instance.CurrentState == GameState.Playing)
         {
             Debug.Log("Game Over");
             _activeGame = false;
             // Game Over Logic Start!
+            GameManager.Instance.GameOver();
         }
 
         //Debug.Log("Monster Count : " + monsterCount);
@@ -99,8 +106,13 @@ public class SpawnManager : Singleton<SpawnManager>
 
     IEnumerator SpawnLoop()
     {
-        while (_currentWave <= _endWave && _activeGame)
+        while (_currentWave <= _endWave)//_activeGame)
         {
+            while(GameManager.Instance.CurrentState != GameState.Playing)
+            {
+                yield return null; // 1프레임씩 대기하면서 체크
+            }
+
             gameInfoUIManager.UpdateWave(_currentWave);
             gameInfoUIManager.AlertWave(_currentWave);
 
@@ -129,9 +141,6 @@ public class SpawnManager : Singleton<SpawnManager>
 
     IEnumerator SpawnWave(int wave, PlayerNumber playerNum, int monsterIndex)
     {
-        //Debug.Log($"{wave} Wave Start!");
-        //gameInfoUIManager.UpdateWave(wave);
-        //gameInfoUIManager.AlertWave(wave);
         Vector2 pos = new Vector2();
         if (playerNum == PlayerNumber.Player1)
             pos = _generalSpawnPosition1;
@@ -142,8 +151,8 @@ public class SpawnManager : Singleton<SpawnManager>
         {
             GameObject mob = Instantiate(_monsterPrefabs[monsterIndex], pos, Quaternion.identity, _monsterRoot);
             mob.GetComponent<MonsterMoving>().Initialize(playerNum, MonsterType.General);
-            //mob.GetComponent<MonsterMoving>().SetTilemap(_tilemap);
             mob.GetComponent<MonsterHealth>().Initialize(wave);
+            _spawnedMonsterList.Add(mob);
             _monsterCount++;
 
             gameInfoUIManager.UpdateMonsterCount(_monsterCount, _monsterLimit);
@@ -152,9 +161,6 @@ public class SpawnManager : Singleton<SpawnManager>
     }
     void SpawnBossWave(int wave, PlayerNumber playerNum, int bossIndex)
     {
-        //Debug.Log($"Boss Wave({wave}) Start!");
-        //gameInfoUIManager.UpdateWave(wave);
-        //gameInfoUIManager.AlertWave(wave);
         Vector2 pos = new Vector2();
         if (playerNum == PlayerNumber.Player1)
             pos = _bossSpawnPosition1;
@@ -162,11 +168,13 @@ public class SpawnManager : Singleton<SpawnManager>
             pos = _bossSpawnPosition2;
 
         GameObject boss = Instantiate(_bossPrefabs[bossIndex], pos, Quaternion.identity, _bossRoot);
-        _bossAlive = true;
+        //_bossAlive = true;
         boss.GetComponent<BossMoving>().Initialize(playerNum, MonsterType.Boss);
-        //boss.GetComponent<BossMoving>().SetTilemap(_tilemap);
         boss.GetComponent<BossHealth>().Initialize(wave);
+        _spawnedBossList.Add(boss);
         _monsterCount++;
+        _bossCount += 1;
+
         gameInfoUIManager.UpdateMonsterCount(_monsterCount, _monsterLimit);
 
     }
@@ -191,23 +199,66 @@ public class SpawnManager : Singleton<SpawnManager>
             remainTime--;
         }
 
-        if (_bossAlive)
+        if(_bossCount > 0)
         {
-            _activeGame = false;
+            GameManager.Instance.GameOver();
         }
+
+        //if (_bossAlive)
+        //{
+        //    _activeGame = false;
+        //}
     }
 
-    public void OnMonsterDeath(int type)
+    public void OnMonsterDeath(GameObject monster, MonsterType type) //int type)
     {
         _monsterCount--;
         gameInfoUIManager.UpdateMonsterCount(_monsterCount, _monsterLimit);
 
-        if (type == 1) // boss
-            _bossAlive = false;
+        
+        if (type == MonsterType.Boss) // boss
+        {
+            //_bossAlive = false;
+            _bossCount -= 1;
+            _spawnedBossList.Remove(monster);
+        }
+        else if(type == MonsterType.General)
+        {
+            _spawnedMonsterList.Remove(monster);
+        }
 
-        // Notify monster's money
-        bool isBoss = type == 1;
-        int money = _currentWave * (isBoss ? 40 : 20); // 보스는 40, 일반 몬스터는 20
+        //int money = _currentWave * (type == MonsterType.Boss ? 40 : 20); // 보스는 40, 일반 몬스터는 20
+        int money = (type == MonsterType.Boss ? balanceData.bossKillGold : balanceData.monsterKillGold);
         onMonsterDeath?.Invoke(money);
+    }
+
+    public void ResetSetting()
+    {
+        // Manage Coroutine
+        StopAllCoroutines();
+
+        // Remove Monster
+        foreach (var monster in _spawnedMonsterList)
+        {
+            if(monster != null)
+                Destroy(monster);
+        }
+        _spawnedMonsterList.Clear();
+
+        foreach(var monster in _spawnedBossList)
+        {
+            if (monster != null)
+                Destroy(monster);
+        }
+        _spawnedBossList.Clear();
+
+        // Wave Information
+        _currentWave = 1;
+        _monsterCount = 0;
+        gameInfoUIManager.UpdateMonsterCount(_monsterCount, _monsterLimit);
+        _bossCount = 0;
+        gameInfoUIManager.UpdateTime(0);
+
+        StartCoroutine(SpawnLoop());
     }
 }

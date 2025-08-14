@@ -5,7 +5,7 @@ public class Fireball : MonoBehaviour
 {
 	[Header("[Properties]")]
 	public float speed = 4f;
-	public float damage = 10f;
+	public float damage = 30f;
 	
 	[Header("[Animator]")]
 	[SerializeField] private Animator _animator;

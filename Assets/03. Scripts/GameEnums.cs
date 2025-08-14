@@ -10,3 +10,10 @@ public enum MonsterType
     General = 0,
     Boss
 }
+
+public enum GameState
+{
+    Title = 0,
+    Playing,
+    Gameover
+}

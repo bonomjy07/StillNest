@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class FloatingMoneyTextManager : Singleton<FloatingMoneyTextManager>
 {
@@ -17,4 +17,6 @@ public class FloatingMoneyTextManager : Singleton<FloatingMoneyTextManager>
     public FloatingMoneyText Spawn() => _pool.Get();
     
     public void Despawn(FloatingMoneyText moneyText) => _pool.Release(moneyText);
+
+    public void ResetSetting() => _pool.ReleaseAll();
 }

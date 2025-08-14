@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -50,9 +50,13 @@ public class PlacementManager : Singleton<PlacementManager>
 
     private void Update()
     {
-        Vector3Int mouseCellPos = GetMouseCellPosition();
+        if(GameManager.Instance.CurrentState == GameState.Playing)
+        {
+            Vector3Int mouseCellPos = GetMouseCellPosition();
 
-        HandleNormalMode(mouseCellPos);
+            HandleNormalMode(mouseCellPos);
+        }
+        
     }
 
     private void HandleNormalMode(Vector3Int cellPos)
@@ -217,5 +221,15 @@ public class PlacementManager : Singleton<PlacementManager>
         }
 
         return null;
+    }
+
+    public void ResetSetting()
+    {
+        foreach(var unit in _unitMap)
+        {
+            if(unit.Value != null)
+                Destroy(unit.Value);
+        }
+        _unitMap.Clear();
     }
 }
