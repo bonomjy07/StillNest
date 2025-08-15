@@ -11,13 +11,11 @@ public class GameInfoUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _wavePopupText;
     private Animator _wavePopupAnimator;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         _wavePopupAnimator = _wavePopup.GetComponent<Animator>();
     }
 
-    // Update is called once per frame
     void Update()
     {
 

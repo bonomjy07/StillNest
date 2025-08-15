@@ -15,7 +15,7 @@ public class MonsterMoving : MonoBehaviour
     protected PlayerNumber _playerNumber; // 1p(= 0), 2p(= 1)
     protected MonsterType _monsterType; // general(= 0), boss(= 1)
 
-    protected float _speed = 3f; // monster에 따라 다른 speed 적용하려면 추후에 prefab별로 차등적용할것
+    protected float _speed = 3f;
     protected bool _isDead;
 
     private SpawnManager _spawnManager;
@@ -25,13 +25,11 @@ public class MonsterMoving : MonoBehaviour
     protected float _generalMonsterOffsetY = 0.14f;
     protected float _bossMonsterOffsetY = 0.64f;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        //Initialize();
+
     }
 
-    // Update is called once per frame
     void Update()
     {
 
@@ -60,7 +58,6 @@ public class MonsterMoving : MonoBehaviour
 
     protected virtual void SetTurnPos(PlayerNumber player, MonsterType type)
     {
-        // monster 마다 다른 기준점이 필요하면 여기서 수정
         _turnPos = new Vector2[4];
         BoundsInt bound = _pathTilemap.cellBounds;
 

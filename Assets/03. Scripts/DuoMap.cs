@@ -37,7 +37,7 @@ public class DuoMap : MonoBehaviour
 
     private void Start()
     {
-        // 멀티 적용전 꺼두기
+        // 1p만 적용
         hero2PlayerTileMap.gameObject.SetActive(false);
     }
 

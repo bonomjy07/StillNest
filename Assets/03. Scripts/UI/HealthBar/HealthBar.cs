@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using TMPro;
 using UnityEngine;
 using DG.Tweening;
@@ -17,8 +17,6 @@ public class HealthBar : MonoBehaviour
     [SerializeField] private Color _dangerColor = Color.red;
     
     private Transform _target;
-    private Action<HealthBar> _onRelease;
-    
     private Camera _mainCamera;
 
     private void Awake()

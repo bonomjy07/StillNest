@@ -22,28 +22,24 @@ public class MonsterHealth : MonoBehaviour
     public GameBalanceData balanceData;
 
     public bool IsDead => _currentHp <= 0;
-    public int Money => _money; // or _wave * 10;
+    public int Money => _money;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         
-
         //StartCoroutine(TempDotDamage()); // For Test
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (_currentHp <= 0 && !_isDead)
         {
             Die();
-            //_spawnManager.RemoveMonster(); // SpawnManager쪽에 몬스터 죽을때 알리는건데 미완성
         }
     }
     protected virtual void Awake()
     {
-        _spawnManager = GameObject.Find("Spawn Manager").GetComponent<SpawnManager>(); // SpawnManager script
+        _spawnManager = GameObject.Find("Spawn Manager").GetComponent<SpawnManager>();
         _monsterMoving = GetComponent<MonsterMoving>();
         _animator = GetComponent<Animator>();
         _isDead = false;
@@ -54,7 +50,7 @@ public class MonsterHealth : MonoBehaviour
     public virtual void Initialize(int wave)
     {
         _wave = wave;
-        //_maxHp = _wave * 50;
+        
         _maxHp = 50 + (_wave - 1) * 20;
         _currentHp = _maxHp;
     }
@@ -88,12 +84,11 @@ public class MonsterHealth : MonoBehaviour
 
     protected IEnumerator TempDotDamage()
     {
-        // 임시로 유닛을 사용하지 않고 몬스터의 Die로직을 처리하기위해 초당 도트템 적용
         while(_currentHp > 0)
         {
             yield return new WaitForSeconds(2f);
             _currentHp -= 20f;
-            //_animator.SetTrigger("TakeHit");
+            
             _animator.ResetTrigger(TakeHitClipId);
             _animator.SetTrigger(TakeHitClipId);
         }
@@ -102,7 +97,7 @@ public class MonsterHealth : MonoBehaviour
     protected virtual void Die()
     {
         _isDead = true;
-        // Notice to MonsterMoving
+        
         _monsterMoving.NoticeMonsterDeath();
         StartCoroutine(DestroyAfterDeath());
     }
@@ -114,7 +109,7 @@ public class MonsterHealth : MonoBehaviour
         ShowMoneyText();
         
         yield return new WaitForSeconds(_deathAnimDuration);
-        // Notice to Spawn Manager
+        
         _spawnManager.OnMonsterDeath(gameObject, MonsterType.General);
         Destroy(gameObject);
         

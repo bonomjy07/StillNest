@@ -4,13 +4,12 @@ using UnityEngine;
 public class BossHealth : MonsterHealth
 {
     private BossMoving _bossMoving;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    
     void Start()
     {
-        //StartCoroutine(TempDotDamage());
+
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (_currentHp <= 0 && !_isDead)

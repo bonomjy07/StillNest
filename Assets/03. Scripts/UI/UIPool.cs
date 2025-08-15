@@ -11,7 +11,7 @@ public class UIPool<T> where T : Component
     private T _prefab;
     private Transform _parent;
 
-    private List<T> _activeInstances = new(); // 사용하고 있는(활성화된) 오브젝트들 보관
+    private List<T> _activeInstances = new();
 
     public void Initialize(T prefab, Transform parent, int defaultCapacity = 20, int maxSize = 100)
     {

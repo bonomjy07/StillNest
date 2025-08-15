@@ -11,12 +11,11 @@ public class Player : MonoBehaviour
 	public GameBalanceData balanceData;
 
 	public bool HasEnoughMoney => Money.Value >= balanceData.heroCost;
-	private int _startMoney = 200;
 
 	private void Awake()
 	{
         balanceData = Resources.Load<GameBalanceData>("ScriptableObjects/GameBalanceData");
-        Money.Value = _startMoney; // 초기 돈 설정
+		Money.Value = balanceData.startMoney;
 	}
 
 	public void SpendMoney(int amount)
@@ -42,6 +41,6 @@ public class Player : MonoBehaviour
 	public void ResetSetting()
 	{
 		Heroes.Clear();
-		Money.Value = _startMoney;
+		Money.Value = balanceData.startMoney;
 	}
 }
