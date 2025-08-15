@@ -67,8 +67,8 @@ public class DuoMap : MonoBehaviour
     {
         return playerIndex switch
         {
-            0 => spawn1PlayerTileMap,
-            1 => spawn2PlayerTileMap,
+            1 => spawn1PlayerTileMap,
+            2 => spawn2PlayerTileMap,
             _ => throw new ArgumentOutOfRangeException(nameof(playerIndex), playerIndex, null)
         };
     }
@@ -77,8 +77,8 @@ public class DuoMap : MonoBehaviour
     {
         return playerIndex switch
         {
-            0 => path1PlayerTilemap,
-            1 => path2PlayerTilemap,
+            1 => path1PlayerTilemap,
+            2 => path2PlayerTilemap,
             _ => throw new ArgumentOutOfRangeException(nameof(playerIndex), playerIndex, null)
         };
     }

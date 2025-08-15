@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Tilemaps;
 
-public class SpawnManager : Singleton<SpawnManager>
+public class SpawnManager : NetworkSingleton<SpawnManager>
 {
     [SerializeField] private GameObject[] _monsterPrefabs;
     [SerializeField] private GameObject[] _bossPrefabs;
@@ -37,11 +37,11 @@ public class SpawnManager : Singleton<SpawnManager>
 
     public UnityAction<int /*Money*/> onMonsterDeath; // 몬스터가 죽었을 때 호출되는 이벤트 (TODO 어떤 몬스터가 죽었는지 넘겨줘야할듯)
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+
+    public override void OnStartServer()
     {
-        _spawnTilemap1 = DuoMap.Inst.GetSpawnTileMap();
-        _spawnTilemap2 = DuoMap.Inst.GetSpawnTileMap(1);
+        _spawnTilemap1 = DuoMap.Inst.GetSpawnTileMap(1);
+        _spawnTilemap2 = DuoMap.Inst.GetSpawnTileMap(2);
         // Get Spawn Position     
         _generalSpawnPosition1 = GetSpawnPosition(_spawnTilemap1, MonsterType.General);
         _generalSpawnPosition2 = GetSpawnPosition(_spawnTilemap2, MonsterType.General);
@@ -52,11 +52,18 @@ public class SpawnManager : Singleton<SpawnManager>
         Debug.Log($"Boss Spawn Position 1 : ({_bossSpawnPosition1.x}, {_bossSpawnPosition1.y})");
         Debug.Log($"Boss Spawn Position 2 : ({_bossSpawnPosition2.x}, {_bossSpawnPosition2.y})");
 
-        gameInfoUIManager = GameObject.Find("Game Manager").GetComponent<GameInfoUIManager>();
+        gameInfoUIManager = GameObject.Find("Game Manager")
+                                      .GetComponent<GameInfoUIManager>();
 
         StartCoroutine(SpawnLoop());
     }
 
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    void Start()
+    {
+
+    }
+    
     // Update is called once per frame
     void Update()
     {
@@ -98,6 +105,17 @@ public class SpawnManager : Singleton<SpawnManager>
 
     IEnumerator SpawnLoop()
     {
+        if (!IsServerStarted)
+        {
+            Debug.LogError($"server is not started yet. Cannot spawn monsters.");
+            yield break;
+        }
+
+        if (base.Owner.IsLocalClient)
+        {
+            Debug.LogError($"이거찍히면안되는데");
+        }
+        
         while (_currentWave <= _endWave && _activeGame)
         {
             gameInfoUIManager.UpdateWave(_currentWave);
@@ -143,6 +161,10 @@ public class SpawnManager : Singleton<SpawnManager>
             mob.GetComponent<MonsterMoving>().Initialize(playerNum, MonsterType.General);
             //mob.GetComponent<MonsterMoving>().SetTilemap(_tilemap);
             mob.GetComponent<MonsterHealth>().Initialize(wave);
+            mob.name += $"idx:{i}, player:{playerNum}"; // 이름은 동기화안될껄?
+            
+            Spawn(mob, null);
+            
             _monsterCount++;
 
             gameInfoUIManager.UpdateMonsterCount(_monsterCount, _monsterLimit);

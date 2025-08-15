@@ -13,7 +13,7 @@ public class BossHealth : MonsterHealth
     // Update is called once per frame
     void Update()
     {
-        if (_currentHp <= 0 && !_isDead)
+        if (_currentHp.Value <= 0 && !_isDead.Value)
         {
             Die();
         }
@@ -24,20 +24,18 @@ public class BossHealth : MonsterHealth
         _spawnManager = GameObject.Find("Spawn Manager").GetComponent<SpawnManager>(); // SpawnManager script
         _bossMoving = GetComponent<BossMoving>();
         _animator = GetComponent<Animator>();
-        _isDead = false;
     }
 
     public override void Initialize(int wave)
     {
         _wave = wave;
-        _maxHp = _wave * 1000;
-        _currentHp = _maxHp;
+        _maxHp.Value = _wave * 1000;
+        _currentHp.Value = _maxHp.Value;
     }
 
     protected override void Die()
     {
-        _isDead = true;
-        _bossMoving.NoticeMonsterDeath();
+        _isDead.Value = true;
         StartCoroutine(DestroyAfterDeath());
     }
 

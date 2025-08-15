@@ -46,7 +46,7 @@ public class HeroPlacementController : MonoBehaviour //NetworkBehaviour
     private Vector3Int? _selectedCell;
     private Vector3Int? _targetCell;
 
-    private void Awake()
+    private void Start()
     {
         // Map Setting
         _grid = DuoMap.Inst.grid;
