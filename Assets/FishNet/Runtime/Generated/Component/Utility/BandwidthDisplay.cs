@@ -110,6 +110,12 @@ namespace FishNet.Component.Utility
         [SerializeField]
         private Color _color = Color.white;
         /// <summary>
+        /// Font size for text.
+        /// </summary>
+        [Tooltip("Font size")]
+        [SerializeField]
+        private int _fontSize = 15;
+        /// <summary>
         /// Which corner to display network statistics in.
         /// </summary>
         [Tooltip("Which corner to display network statistics in.")]
@@ -326,7 +332,7 @@ namespace FishNet.Component.Utility
         private void OnGUI()
         {
             _style.normal.textColor = _color;
-            _style.fontSize = 15;
+            _style.fontSize = _fontSize;
 
             float width = 100f;
             float height = 0f;
