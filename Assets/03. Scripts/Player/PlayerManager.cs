@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class PlayerManager : Singleton<PlayerManager>
 {
+	/*
 	public Player CurrentPlayer { get; private set; }
 
 	protected override void Awake()
@@ -30,6 +31,7 @@ public class PlayerManager : Singleton<PlayerManager>
 			CurrentPlayer.AddMoney(monsterMoney);
 		}
 	}
+	*/
 
 	public void SpawnHero()
 	{
