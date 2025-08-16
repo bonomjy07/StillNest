@@ -230,7 +230,7 @@ public class SpawnManager : NetworkSingleton<SpawnManager>
             _bossAlive = false;
 
         // Notify monster's money
-        bool isBoss = type == 1;
+        bool isBoss = (MonsterType)type == MonsterType.Boss;
         int money = _currentWave * (isBoss ? 40 : 20); // 보스는 40, 일반 몬스터는 20
         onMonsterDeath?.Invoke(money);
     }

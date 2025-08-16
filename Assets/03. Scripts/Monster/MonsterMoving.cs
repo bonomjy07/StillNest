@@ -31,6 +31,7 @@ public class MonsterMoving : NetworkBehaviour
     private bool _stopMovement;
 
     protected PlayerNumber PlayerNumber => _syncPlayerNumber.Value;
+    public MonsterType MonsterType => _syncMonsterType.Value;
 
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created

@@ -44,7 +44,8 @@ public class BossHealth : MonsterHealth
         _animator.SetTrigger(DeathClipId);
         yield return new WaitForSeconds(_deathAnimDuration);
         
-        _spawnManager.OnMonsterDeath(1);
+        Monster mob = GetComponent<Monster>();
+        _spawnManager.OnMonsterDeath((int)mob.MobType);
         Destroy(gameObject);
     }
 }

@@ -15,30 +15,33 @@ public class MainHUD : MonoBehaviour
 
 	private void Awake()
 	{
-		Init();
+		GameEventHub.Instance
+		            .OnLocalClient
+		            .Subscribe(client => Init())
+		            .AddTo(this);
 	}
 
 	private void Init()
 	{
-		Player currentPlayer = PlayerManager.Instance.CurrentPlayer;
-		if (!currentPlayer)
+		CoopPlayer localClient = CoopPlayer.Local;
+		if (!localClient)
 		{
 			return;
 		}
 		
 		if (moneyText)
 		{
-			currentPlayer.Money
-			             .Subscribe(money => moneyText.SetText($"{money}"))
-			             .AddTo(this);
+			localClient.OnMoneyChanged
+			           .Subscribe(money => moneyText.SetText($"{money}"))
+			           .AddTo(this);
 		}
 
 		if (spawnHeroButton)
 		{
-			currentPlayer.Money
-			             .Subscribe(money => spawnHeroButton.interactable = money >= 20)
-			             .AddTo(this);
-			
+			localClient.OnMoneyChanged
+			           .Subscribe(money => spawnHeroButton.interactable = money >= 20)
+			           .AddTo(this);
+
 			spawnHeroButton.onClick.AddListener(OnSpawnHeroButtonClicked);
 		}
 	}

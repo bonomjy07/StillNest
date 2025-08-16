@@ -9,6 +9,7 @@ public class Monster : NetworkBehaviour
     
     public MonsterHealth Health => _health;
     public MonsterMoving Movement => _movement;
+    public MonsterType MobType => Movement.MonsterType;
     
     private void Start()
     {

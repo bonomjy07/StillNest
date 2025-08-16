@@ -1,37 +1,69 @@
 using System;
 using System.Collections.Generic;
+
 using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
+
 using UniRx;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class CoopPlayer : NetworkBehaviour
 {
+    public static CoopPlayer Local { get; private set; }
+    
     [Header("[Spawn Hero]")]
     [SerializeField] private HeroPlacementController _placementController;
     [SerializeField] private NetworkObject _heroesRoot;
     [SerializeField] private List<GameObject> _heroPrefabList;
 
     private readonly SyncList<HeroUnit> _heroList = new();
+    
+    public int Money
+    {
+        get => _syncMoney.Value;
+        private set => _syncMoney.Value = value;
+    }
+
+    private readonly SyncVar<int> _syncMoney = new();
+    private readonly ReactiveProperty<int> _rxMoney = new();
+
+    public IObservable<int> OnMoneyChanged => _rxMoney.AsObservable();
 
     private void Awake()
     {
         _placementController.OnMoveTo = HandleOnMoveTo;
+        
+        _syncMoney.OnChange += (prev, next, asServer) =>
+        {
+            if (!asServer)
+            {
+                // 40원씩 증가하고잇는듯 ?
+                Debug.Log($"[money] Money changed from {prev} to {next}.");
+                _rxMoney.Value = next; 
+            }
+        };
+
+        // setup initial money
+        _syncMoney.SetInitialValues(100);
+        _rxMoney.Value = _syncMoney.Value;
     }
 
-    private void HandleOnMoveTo(HeroUnit hero, Vector3Int from, Vector3Int to, Vector3 worldPos)
+    public override void OnStartServer()
     {
-        hero.MoveTo(worldPos);
-        
-        //MoveToServerRpc(hero, worldPos);
+        SpawnManager.Instance.onMonsterDeath += OnMonsterDeath;
+    }
+
+    public override void OnStopServer()
+    {
+        if (!SpawnManager.IsQuitting)
+        {
+            SpawnManager.Instance.onMonsterDeath -= OnMonsterDeath;
+        }
     }
 
     public override void OnStartClient()
     {
-        base.OnStartClient();
-        
         name += $" ID:{Owner.ClientId}";
 
         int playerIndex = Owner.IsHost ? 0 : 1;
@@ -43,11 +75,37 @@ public class CoopPlayer : NetworkBehaviour
             return;
         }
 
+        // Notify
+        Local = this;
+        GameEventHub.Instance
+                    .RaiseLocalClientOn(this);
+
         // Subscribe to the hero spawn button click event
         GameEventHub.Instance
                     .OnHeroSpawnButtonClick
                     .Subscribe(unit => SpawnHeroServerRpc(Owner))
                     .AddTo(this);
+    }
+
+    public override void OnStopClient()
+    {
+        if (IsOwner)
+        {
+            Local = this;
+        }
+    }
+    
+    private void OnMonsterDeath(int money)
+    {
+        if (IsServerInitialized)
+        {
+            Money += money;
+        }
+    }
+
+    private void HandleOnMoveTo(HeroUnit hero, Vector3Int from, Vector3Int to, Vector3 worldPos)
+    {
+        hero.MoveTo(worldPos);
     }
 
     [ServerRpc]
@@ -75,6 +133,8 @@ public class CoopPlayer : NetworkBehaviour
         _heroList.Add(heroUnit);
         // cache heroes location
         AddSpawnedUnit(heroUnit);
+
+        Money -= 20; // Deduct money for spawning the hero
     }
 
     [ObserversRpc]

@@ -32,6 +32,16 @@ public class MonsterHealth : NetworkBehaviour
         remove => _isDead.OnChange -= value;
     }
     
+    protected virtual void Awake()
+    {
+        _spawnManager = GameObject.Find("Spawn Manager")
+                                  .GetComponent<SpawnManager>(); // SpawnManager script
+        _monsterMoving = GetComponent<MonsterMoving>();
+        _animator = GetComponent<Animator>();
+        
+        
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -46,16 +56,9 @@ public class MonsterHealth : NetworkBehaviour
         if (_currentHp.Value <= 0 && !_isDead.Value)
         {
             Die();
-            //_spawnManager.RemoveMonster(); // SpawnManager쪽에 몬스터 죽을때 알리는건데 미완성
         }
     }
-    protected virtual void Awake()
-    {
-        _spawnManager = GameObject.Find("Spawn Manager").GetComponent<SpawnManager>(); // SpawnManager script
-        _monsterMoving = GetComponent<MonsterMoving>();
-        _animator = GetComponent<Animator>();
-    }
-
+    
     public virtual void Initialize(int wave)
     {
         _wave = wave;
@@ -118,10 +121,12 @@ public class MonsterHealth : NetworkBehaviour
         
         yield return new WaitForSeconds(_deathAnimDuration);
         // Notice to Spawn Manager
-        _spawnManager.OnMonsterDeath(0);
-        Destroy(gameObject);
+        Monster mob = GetComponent<Monster>();
+        _spawnManager.OnMonsterDeath((int)mob.MobType);
         
         HideHealthBar();
+        
+        Despawn();
     }
 
     private void ShowMoneyText()
