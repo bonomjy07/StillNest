@@ -28,9 +28,6 @@ public class HeroPlacementController : MonoBehaviour //NetworkBehaviour
 
     public UnityAction<HeroUnit, Vector3Int, Vector3Int, Vector3> OnMoveTo;
     
-    // 영웅 배치
-    private Grid _grid;
-    private Tilemap _heroTileMap;
     
     // 하이라이트
     private TilemapRenderer _heroTileMapRenderer;
@@ -45,11 +42,14 @@ public class HeroPlacementController : MonoBehaviour //NetworkBehaviour
     // 유닛선택 타일
     private Vector3Int? _selectedCell;
     private Vector3Int? _targetCell;
-
+    
+    // 영웅 배치
+    private Grid Grid => DuoMap.Inst.grid;
+    private Tilemap _heroTileMap;
+    
     private void Start()
     {
         // Map Setting
-        _grid = DuoMap.Inst.grid;
         _selectTileMap = DuoMap.Inst.selectHighlightTileMap;
         
         // Highlight Color
@@ -112,7 +112,7 @@ public class HeroPlacementController : MonoBehaviour //NetworkBehaviour
     {
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         worldPos.z = 0;
-        return _grid.WorldToCell(worldPos);
+        return Grid.WorldToCell(worldPos);
     }
 
     private bool IsEmptyTile(Vector3Int cellPos)
@@ -198,7 +198,7 @@ public class HeroPlacementController : MonoBehaviour //NetworkBehaviour
         _heroTileMapRenderer = DuoMap.Inst.GetMyHeroTileMapRenderer(playerIndex);
     }
 
-    public HeroUnit InstantiateHero()
+    public Vector3 GetFirstEmptyTilePosition()
     {
         BoundsInt bounds = _heroTileMap.cellBounds;
 
@@ -218,22 +218,17 @@ public class HeroPlacementController : MonoBehaviour //NetworkBehaviour
                     continue;
                 }
 
-                Vector3 worldPos = _heroTileMap.GetCellCenterWorld(cellPos);
-                GameObject unitPrefab = _heroPrefabList[1]; // 일단 ㅜ어리어만
-                //GameObject unitPrefab = _heroPrefabList[Random.Range(0, _heroPrefabList.Count)];
-                GameObject unitInstance = Instantiate(unitPrefab, worldPos, Quaternion.identity);
-                
-                HeroUnit unit = unitInstance.GetComponent<HeroUnit>();
-                return unit;
+                // 비어있는 타일의 중심 월드 좌표 리턴
+                return _heroTileMap.GetCellCenterWorld(cellPos);
             }
         }
 
-        return null;
+        return Vector3.zero;
     }
 
     public void AddSpawnedUnit(GameObject unit)
     {
-        Vector3Int cellPos = _grid.WorldToCell(unit.transform.position);
+        Vector3Int cellPos = Grid.WorldToCell(unit.transform.position);
         _unitMap[cellPos] = unit;
     }
 }

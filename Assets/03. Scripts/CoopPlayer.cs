@@ -12,6 +12,7 @@ public class CoopPlayer : NetworkBehaviour
     [Header("[Spawn Hero]")]
     [SerializeField] private HeroPlacementController _placementController;
     [SerializeField] private NetworkObject _heroesRoot;
+    [SerializeField] private List<GameObject> _heroPrefabList;
 
     private readonly SyncList<HeroUnit> _heroList = new();
 
@@ -64,7 +65,16 @@ public class CoopPlayer : NetworkBehaviour
     [ServerRpc]
     private void SpawnHeroServerRpc(NetworkConnection conn)
     {
-        HeroUnit heroUnit = _placementController.InstantiateHero();
+        Vector3 heroSpawnPosition = _placementController.GetFirstEmptyTilePosition();
+        GameObject heroPrefab = _heroPrefabList[1]; // 일단 ㅜ어리어만
+        GameObject heroInstance = Instantiate(heroPrefab, heroSpawnPosition, Quaternion.identity);
+        if (!heroInstance)
+        {
+            Debug.LogError($"Failed to Spawn hero for player {conn.ClientId}");
+            return;
+        }
+
+        HeroUnit heroUnit = heroInstance.GetComponent<HeroUnit>();
         if (!heroUnit)
         {
             return;
