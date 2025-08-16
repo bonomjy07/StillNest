@@ -117,8 +117,6 @@ public partial class HeroUnit : NetworkBehaviour
             return;
         }
         
-        Debug.LogError($"[RunInputs][{name}] is moving to {data.Destination}");
-        
         Vector3 dir = data.Destination - transform.position;
         float dist = dir.magnitude;
 
@@ -150,7 +148,6 @@ public partial class HeroUnit : NetworkBehaviour
     private void PerformReconcile(ReconcileData rd, Channel channel = Channel.Unreliable)
     {
         transform.position = rd.Position;
-        Debug.LogError($"[Reconcile] rd.position is {rd.Position}");
     }
 
     protected virtual void Update()
@@ -295,7 +292,7 @@ public partial class HeroUnit : NetworkBehaviour
         _destination = worldPosition;
         _hasDestination = true;
         
-        Debug.LogError($"Moveto() worldPosition:{worldPosition}");
+        Debug.Log($"[unit][{name}]Moveto() worldPosition:{worldPosition}");
 
         Vector3 moveDir = worldPosition - transform.position;
         UpdateFacing(moveDir);
