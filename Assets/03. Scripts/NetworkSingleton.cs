@@ -6,6 +6,8 @@ public class NetworkSingleton<T> : NetworkBehaviour where T : NetworkBehaviour
 	private static T _instance;
 	private static bool _isQuitting;
 
+	public static bool IsQuitting => _isQuitting;
+
 	public static T Instance
 	{
 		get
