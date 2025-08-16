@@ -27,28 +27,26 @@ public partial class HeroUnit : NetworkBehaviour
 
     protected HeroState State
     {
-        get => _syncState;
+        get => _syncState.Value;
         private set
         {
+            if (IsOwner)
             {
-                _syncState = value;
+                SetSyncStateServerRpc(value);
             }
         }
     }
 
-    private HeroState _syncState;
-    //private readonly SyncVar<HeroState> _syncState = new(); 
-    
+    private readonly SyncVar<HeroState> _syncState = new();
+
     // Components
     protected Animator _animator;
     protected SpriteRenderer _spriteRenderer;
     
     // Movement
-    protected const float STOP_THRESHOLD = 0.05f;
-    
-    [SerializeField]
-    protected Vector3 _destination;
-    [SerializeField]
+    private const float STOP_THRESHOLD = 0.05f;
+
+    private Vector3 _destination;
     private bool _hasDestination;
     
     // Attack
@@ -87,12 +85,15 @@ public partial class HeroUnit : NetworkBehaviour
         TimeManager.OnTick -= TimeManager_OnTick;
     }
 
+    [ServerRpc]
+    private void SetSyncStateServerRpc(HeroState newState)
+    {
+        _syncState.Value = newState;
+    }
+
     private void TimeManager_OnTick()
     {
-        //if (IsOwner)
-        {
-            RunInputs(CreateReplicateData());
-        }
+        RunInputs(CreateReplicateData());
 
         if (IsServerInitialized)
         {
@@ -117,25 +118,23 @@ public partial class HeroUnit : NetworkBehaviour
             return;
         }
         
-        Vector3 dir = data.Destination - transform.position;
-        float dist = dir.magnitude;
+        Vector3 toDestination = data.Destination - transform.position;
+        float remainingDistance = toDestination.magnitude;
+        float moveStep = _moveSpeed * (float)TimeManager.TickDelta;
 
-        if (dist < STOP_THRESHOLD)
+        if (remainingDistance < STOP_THRESHOLD || moveStep >= remainingDistance)
         {
             transform.position = data.Destination;
             _hasDestination = false;
+            SetAnimatorParam(HeroState.Idle);
             return;
         }
 
-        float step = _moveSpeed * (float)TimeManager.TickDelta;
-        if (step >= dist)
-        {
-            transform.position = data.Destination;
-            _hasDestination = false;
-            return;
-        }
+        transform.position += (toDestination / remainingDistance) * moveStep;
         
-        transform.position += (dir / dist) * step;
+        SetAnimatorParam(HeroState.Moving);
+        
+        SetFacing(toDestination.normalized);
     }
 
     public override void CreateReconcile()
@@ -154,9 +153,6 @@ public partial class HeroUnit : NetworkBehaviour
     {
         UpdateCooldown();
         
-        // 예측 이동 테스트 중
-        //UpdateMovement();
-        
         switch (State)
         {
             case HeroState.Idle:
@@ -167,22 +163,6 @@ public partial class HeroUnit : NetworkBehaviour
                 }
                 break;
             } 
-            
-            case HeroState.Moving:
-            {
-                // 굳이 이때만 업데이트할 ㅣㅍㄹ요가 있을까 ??
-                break;
-            }
-            
-            case HeroState.Attacking:
-            {
-                if (_currentTarget)
-                {
-                    Vector3 direction = (_currentTarget.position - transform.position).normalized;
-                    //UpdateFacing(direction);
-                }
-                break;
-            }
         }
     }
 
@@ -226,7 +206,7 @@ public partial class HeroUnit : NetworkBehaviour
         _currentTarget = target;
 
         Vector3 dir = (target.position - transform.position).normalized;
-        UpdateFacing(dir);
+        SetFacing(dir);
     }
 
     protected void OnAttackAnimEnd()
@@ -262,45 +242,34 @@ public partial class HeroUnit : NetworkBehaviour
         State = HeroState.Idle;
     }
 
-    private void UpdateMovement()
-    {
-        // 예측이동 허용
-        if (!IsServerInitialized && !IsOwner)
-        {
-            return;
-        }
-        
-        Vector3 direction = transform.position - _destination;
-        float distance = direction.magnitude;
-
-        if (distance < STOP_THRESHOLD)
-        {
-            transform.position = _destination;
-            State = HeroState.Idle;
-            return;
-        }
-
-        transform.position += -direction.normalized * (_moveSpeed * Time.deltaTime);
-    }
-
-    public bool moveToControl;
-    
     public void MoveTo(Vector3 worldPosition)
     {
+        Debug.Log($"[unit][{name}]Moveto() worldPosition:{worldPosition}");
+
         State = HeroState.Moving;
         
         _destination = worldPosition;
         _hasDestination = true;
-        
-        Debug.Log($"[unit][{name}]Moveto() worldPosition:{worldPosition}");
-
-        Vector3 moveDir = worldPosition - transform.position;
-        UpdateFacing(moveDir);
     }
 
-    private void UpdateFacing(Vector3 moveDir)
+    private void SetFacing(Vector3 moveDir)
     {
+        if (moveDir.x == 0f) 
+        {
+            return;
+        }
         _spriteRenderer.flipX = moveDir.x < 0;
+    }
+
+    private void SetAnimatorParam(HeroState state)
+    {
+        if (_animator == null)
+        {
+            Debug.LogError($"[{name}] animator is null");
+            return;
+        }
+        
+        _animator.SetInteger(HeroStateParamId, (int)state);
     }
 }
 
