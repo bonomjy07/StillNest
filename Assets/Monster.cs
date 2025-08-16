@@ -6,7 +6,10 @@ public class Monster : NetworkBehaviour
 {
     [SerializeField] private MonsterHealth _health;
     [SerializeField] private MonsterMoving _movement;
-
+    
+    public MonsterHealth Health => _health;
+    public MonsterMoving Movement => _movement;
+    
     private void Start()
     {
         _health.OnDeadChange += HealthOnOnDeadChange;

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using FishNet.Object;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Tilemaps;
@@ -157,13 +158,14 @@ public class SpawnManager : NetworkSingleton<SpawnManager>
 
         for (int i = 0; i < _monsterPerWave; i++)
         {
-            GameObject mob = Instantiate(_monsterPrefabs[monsterIndex], pos, Quaternion.identity, _monsterRoot);
-            mob.GetComponent<MonsterMoving>().Initialize(playerNum, MonsterType.General);
-            //mob.GetComponent<MonsterMoving>().SetTilemap(_tilemap);
-            mob.GetComponent<MonsterHealth>().Initialize(wave);
+            GameObject mobGo = Instantiate(_monsterPrefabs[monsterIndex], pos, Quaternion.identity);
+            Monster mob = mobGo.GetComponent<Monster>();
+            mob.Movement.Initialize(playerNum, MonsterType.General);
+            mob.Health.Initialize(wave);
             mob.name += $"idx:{i}, player:{playerNum}"; // 이름은 동기화안될껄?
             
-            Spawn(mob, null);
+            Spawn(mob.NetworkObject, null);
+            mob.NetworkObject.SetParent(_monsterRoot.GetComponent<NetworkObject>());
             
             _monsterCount++;
 
@@ -171,6 +173,7 @@ public class SpawnManager : NetworkSingleton<SpawnManager>
             yield return new WaitForSeconds(_spawnTerms);
         }
     }
+    
     void SpawnBossWave(int wave, PlayerNumber playerNum, int bossIndex)
     {
         //Debug.Log($"Boss Wave({wave}) Start!");
