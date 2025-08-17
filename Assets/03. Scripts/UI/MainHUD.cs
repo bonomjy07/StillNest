@@ -1,9 +1,6 @@
 using System;
-using FishNet.Managing;
-using FishNet.Managing.Client;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using UniRx;
 
@@ -12,6 +9,7 @@ public class MainHUD : MonoBehaviour
 	[Header("[Player]")]
 	public Button spawnHeroButton;
 	public TMP_Text moneyText;
+	public GameObject hostMarker;
 
 	private void Awake()
 	{
@@ -43,6 +41,11 @@ public class MainHUD : MonoBehaviour
 			           .AddTo(this);
 
 			spawnHeroButton.onClick.AddListener(OnSpawnHeroButtonClicked);
+		}
+
+		if (hostMarker)
+		{
+			hostMarker.SetActive(localClient.IsHostInitialized);
 		}
 	}
 
