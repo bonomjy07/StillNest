@@ -38,7 +38,14 @@ public class SpawnManager : NetworkSingleton<SpawnManager>
 
     public UnityAction<int /*Money*/> onMonsterDeath; // 몬스터가 죽었을 때 호출되는 이벤트 (TODO 어떤 몬스터가 죽었는지 넘겨줘야할듯)
 
-
+    protected override void Awake()
+    {
+        base.Awake();
+        
+        gameInfoUIManager = GameObject.Find("Game Manager")
+                                      .GetComponent<GameInfoUIManager>();
+    }
+    
     public override void OnStartServer()
     {
         _spawnTilemap1 = DuoMap.Inst.GetSpawnTileMap(1);
@@ -53,8 +60,6 @@ public class SpawnManager : NetworkSingleton<SpawnManager>
         Debug.Log($"Boss Spawn Position 1 : ({_bossSpawnPosition1.x}, {_bossSpawnPosition1.y})");
         Debug.Log($"Boss Spawn Position 2 : ({_bossSpawnPosition2.x}, {_bossSpawnPosition2.y})");
 
-        gameInfoUIManager = GameObject.Find("Game Manager")
-                                      .GetComponent<GameInfoUIManager>();
 
         StartCoroutine(SpawnLoop());
     }
