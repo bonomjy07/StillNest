@@ -39,17 +39,10 @@ public class MonsterHealth : NetworkBehaviour
         _monsterMoving = GetComponent<MonsterMoving>();
         _animator = GetComponent<Animator>();
         
-        
+        _currentHp.OnChange += OnHpChange;
     }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-
-        //StartCoroutine(TempDotDamage()); // For Test
-    }
-
+    
     // Update is called once per frame
     void Update()
     {
@@ -58,7 +51,23 @@ public class MonsterHealth : NetworkBehaviour
             Die();
         }
     }
-    
+
+    private void OnHpChange(float prev, float next, bool asServer)
+    {
+        if (asServer)
+        {
+            return;
+        }
+
+        if (!_healthBar)
+        {
+            return;
+        }
+        
+        float healthPercentage = next / _maxHp.Value;
+        _healthBar.SetBar(healthPercentage, transform);
+    }
+
     public virtual void Initialize(int wave)
     {
         _wave = wave;
@@ -70,10 +79,21 @@ public class MonsterHealth : NetworkBehaviour
         if (!_isDead.Value)
         {
             _currentHp.Value -= dmg;
-            _animator.ResetTrigger(TakeHitClipId);
-            _animator.SetTrigger(TakeHitClipId);
+        }
+
+        TakeDamageClientRpc();
+    }
+
+    [ObserversRpc]
+    private void TakeDamageClientRpc()
+    {
+        if (IsDead)
+        {
+            return;
         }
         
+        _animator.ResetTrigger(TakeHitClipId);
+        _animator.SetTrigger(TakeHitClipId);
         ShowHealthBar();
     }
 
@@ -115,18 +135,30 @@ public class MonsterHealth : NetworkBehaviour
 
     protected virtual IEnumerator DestroyAfterDeath()
     {
+        BeginDeathClientRpc();
+        
+        yield return new WaitForSeconds(_deathAnimDuration + 0.1f); // 바로죽으면 애님 갑자기 사라져보임.
+        
+        Monster mob = GetComponent<Monster>();
+        _spawnManager.OnMonsterDeath((int)mob.MobType);
+
+        EndDeathClientRpc();
+            
+        Despawn();
+    }
+
+    [ObserversRpc]
+    private void BeginDeathClientRpc()
+    {
         _animator.SetTrigger(DeathClipId);
 
         ShowMoneyText();
-        
-        yield return new WaitForSeconds(_deathAnimDuration);
-        // Notice to Spawn Manager
-        Monster mob = GetComponent<Monster>();
-        _spawnManager.OnMonsterDeath((int)mob.MobType);
-        
+    }
+
+    [ObserversRpc]
+    private void EndDeathClientRpc()
+    {
         HideHealthBar();
-        
-        Despawn();
     }
 
     private void ShowMoneyText()

@@ -8,7 +8,7 @@ public class Wizard : HeroUnit
     [SerializeField] private Transform _fireballPointRight;
     [SerializeField] private Transform _fireballPointLeft;
 
-    protected override void Attack()
+    protected override void TakeDamage()
     {
         // base.Attack();
         if (_currentTarget && _currentTarget.TryGetComponent(out MonsterHealth monsterHealth))

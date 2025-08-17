@@ -21,34 +21,32 @@ public class CoopPlayer : NetworkBehaviour
     
     public int Money
     {
-        get => _syncMoney.Value;
-        private set => _syncMoney.Value = value;
+        get => _serverMoney.Value;
+        private set => _serverMoney.Value = value;
     }
 
-    private readonly SyncVar<int> _syncMoney = new();
-    private readonly ReactiveProperty<int> _rxMoney = new();
+    private readonly SyncVar<int> _serverMoney = new();
+    private readonly ReactiveProperty<int> _clientMoney = new();
 
-    public IObservable<int> OnMoneyChanged => _rxMoney.AsObservable();
+    public IObservable<int> OnMoneyChanged => _clientMoney.AsObservable();
 
     private void Awake()
     {
         _placementController.OnMoveTo = HandleOnMoveTo;
         
-        _syncMoney.OnChange += (prev, next, asServer) =>
+        _serverMoney.OnChange += (prev, next, asServer) =>
         {
             if (!asServer)
             {
-                // 40원씩 증가하고잇는듯 ?
-                Debug.Log($"[money] Money changed from {prev} to {next}.");
-                _rxMoney.Value = next; 
+                _clientMoney.Value = next; 
             }
         };
 
         // setup initial money
-        _syncMoney.SetInitialValues(100);
-        _rxMoney.Value = _syncMoney.Value;
+        _serverMoney.SetInitialValues(100);
+        _clientMoney.Value = _serverMoney.Value;
     }
-
+    
     public override void OnStartServer()
     {
         SpawnManager.Instance.onMonsterDeath += OnMonsterDeath;
@@ -60,6 +58,13 @@ public class CoopPlayer : NetworkBehaviour
         {
             SpawnManager.Instance.onMonsterDeath -= OnMonsterDeath;
         }
+        
+        // Clear the hero list
+        foreach (HeroUnit heroUnit in _heroList)
+        {
+            Despawn(heroUnit.gameObject);
+        }
+        _heroList.Clear();
     }
 
     public override void OnStartClient()
@@ -94,7 +99,7 @@ public class CoopPlayer : NetworkBehaviour
             Local = this;
         }
     }
-    
+
     private void OnMonsterDeath(int money)
     {
         if (IsServerInitialized)

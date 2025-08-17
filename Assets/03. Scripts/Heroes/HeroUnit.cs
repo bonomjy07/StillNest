@@ -30,7 +30,11 @@ public partial class HeroUnit : NetworkBehaviour
         get => _syncState.Value;
         private set
         {
-            if (IsOwner)
+            if (IsServerInitialized)
+            {
+                _syncState.Value = value;
+            }
+            else if (IsOwner)
             {
                 SetSyncStateServerRpc(value);
             }
@@ -51,7 +55,7 @@ public partial class HeroUnit : NetworkBehaviour
     
     // Attack
     protected Transform _currentTarget;
-    protected float _cooldownTimer; 
+    private float _cooldownTimer; 
     
     protected int _currentAttackClipId = AttackClipId;
     
@@ -65,7 +69,8 @@ public partial class HeroUnit : NetworkBehaviour
         _animator = GetComponentInChildren<Animator>();
         _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         
-        _animationEventHandler.onAttackAnimationEnd += OnAttackAnimEnd;
+        _animationEventHandler.onAttackAnimationEnd += OnAttackWindUp;
+        _syncState.OnChange += OnStateChange;
     }
 
     private void Start()
@@ -84,6 +89,20 @@ public partial class HeroUnit : NetworkBehaviour
     {
         TimeManager.OnTick -= TimeManager_OnTick;
     }
+    
+    private void OnStateChange(HeroState prev, HeroState next, bool asServer)
+    {
+        // 서버에서만 처리
+        if (asServer)
+        {
+            //SetAnimatorParam(next);
+        }
+        // 
+        else
+        {
+            SetAnimatorParam(next);
+        }
+    }
 
     [ServerRpc]
     private void SetSyncStateServerRpc(HeroState newState)
@@ -98,6 +117,11 @@ public partial class HeroUnit : NetworkBehaviour
         if (IsServerInitialized)
         {
             CreateReconcile();
+        }
+
+        if (IsServerInitialized)
+        {
+            Tick_Attack();
         }
     }
     
@@ -126,13 +150,11 @@ public partial class HeroUnit : NetworkBehaviour
         {
             transform.position = data.Destination;
             _hasDestination = false;
-            SetAnimatorParam(HeroState.Idle);
+            State = HeroState.Idle;
             return;
         }
 
         transform.position += (toDestination / remainingDistance) * moveStep;
-        
-        SetAnimatorParam(HeroState.Moving);
         
         SetFacing(toDestination.normalized);
     }
@@ -149,35 +171,26 @@ public partial class HeroUnit : NetworkBehaviour
         transform.position = rd.Position;
     }
 
-    protected virtual void Update()
+    [Server]
+    private void Tick_Attack()
     {
-        UpdateCooldown();
-        
-        switch (State)
-        {
-            case HeroState.Idle:
-            {
-                if (TryFindTarget(out var target) && _cooldownTimer <= 0f)
-                {
-                    //StartAttack(target);
-                }
-                break;
-            } 
-        }
-    }
-
-    private void UpdateCooldown()
-    {
-        if (_cooldownTimer <= 0f)
+        if (State != HeroState.Idle)
         {
             return;
         }
 
-        _cooldownTimer -= Time.deltaTime;
-        if (_cooldownTimer < 0f)
+        if (_cooldownTimer > 0f)
         {
-            _cooldownTimer = 0f;
+            _cooldownTimer -= (float)TimeManager.TickDelta;
+            return;
         }
+
+        if (!TryFindTarget(out _currentTarget) || _currentTarget == null)
+        {
+            return;
+        }
+        
+        StartAttack(_currentTarget);
     }
 
     private bool TryFindTarget(out Transform target)
@@ -187,7 +200,7 @@ public partial class HeroUnit : NetworkBehaviour
     
         float minDist = float.MaxValue;
     
-        foreach (var hit in hits)
+        foreach (Collider2D hit in hits)
         {
             float dist = Vector2.Distance(transform.position, hit.transform.position);
             if (dist < minDist)
@@ -199,47 +212,50 @@ public partial class HeroUnit : NetworkBehaviour
     
         return target;
     }
-   
+    
+    [Server]
     protected virtual void StartAttack(Transform target)
     {
         State = HeroState.Attacking;
         _currentTarget = target;
-
+        
         Vector3 dir = (target.position - transform.position).normalized;
-        SetFacing(dir);
+        StartAttackClientRpc(dir);
     }
 
-    protected void OnAttackAnimEnd()
+    [ObserversRpc]
+    private void StartAttackClientRpc(Vector3 dir)
     {
+        SetFacing(dir);
+    }
+    
+    private void OnAttackWindUp()
+    {
+        // 서버만
+        if (!IsServerInitialized)
+        {
+            return;
+        }
+        
         if (State != HeroState.Attacking)
         {
             return;
         }
 
-        Attack();
+        TakeDamage();
 
-        EndAttack();
+        State = HeroState.Idle;
+        
+        _currentTarget = null;
+        _cooldownTimer = _attackCooldown;
     }
 
-    protected virtual void Attack()
+    protected virtual void TakeDamage()
     {
         if (_currentTarget && _currentTarget.TryGetComponent(out MonsterHealth monster))
         {
             monster.TakeDamage(_damageAmount);
         }
-    }
-
-    protected void EndAttack()
-    {
-        State = HeroState.Idle;
-        _currentTarget = null;
-        _cooldownTimer = _attackCooldown;
-    }
-    
-    protected void CancelAttack()
-    {
-        _currentTarget = null;
-        State = HeroState.Idle;
     }
 
     public void MoveTo(Vector3 worldPosition)
@@ -250,6 +266,8 @@ public partial class HeroUnit : NetworkBehaviour
         
         _destination = worldPosition;
         _hasDestination = true;
+
+        _currentTarget = null;
     }
 
     private void SetFacing(Vector3 moveDir)

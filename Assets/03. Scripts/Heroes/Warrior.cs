@@ -7,7 +7,10 @@ public class Warrior : HeroUnit
 
     protected override void StartAttack(Transform target)
     {
-        _currentAttackClipId = Random.Range(0, 2) == 0 ? Attack1ClipId : Attack2ClipId;
+        //_currentAttackClipId = Random.Range(0, 2) == 0 ? Attack1ClipId : Attack2ClipId;
+        
+        // 일단 하나만 사용
+        _currentAttackClipId = Attack1ClipId; 
         
         base.StartAttack(target);
     }
