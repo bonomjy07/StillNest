@@ -6,7 +6,7 @@ public class MonsterHealth : MonoBehaviour
     [SerializeField] protected float _maxHp;
     [SerializeField] protected float _currentHp;
     [SerializeField] protected float _deathAnimDuration = 0.22f; // Death 애니메이션 실행시간
-    [SerializeField] protected int _money = 20;
+    protected int _money = 20;
     protected bool _isDead;
     protected int _wave;
 

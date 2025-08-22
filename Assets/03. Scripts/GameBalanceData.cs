@@ -8,6 +8,9 @@ public class GameBalanceData : ScriptableObject
 
     [Header("Hero")]
     public int heroCost = 100;
+    public int upgradeDamageCost = 100;
+    public int upgradeAttackSpeedCost = 100;
+    public int maximumUpgradeLevel = 10;
 
     [Header("Monster")]
     public int monsterKillGold = 5;

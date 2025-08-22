@@ -49,4 +49,15 @@ public class PlayerManager : Singleton<PlayerManager>
 		CurrentPlayer.AddHero(hero);
 		CurrentPlayer.SpendMoney(balanceData.heroCost);
 	}
+
+	//public void UpgradeDamage()
+	//{
+	//	if (!CurrentPlayer) return;
+
+	//	//CurrentPlayer.Upgrade
+ //   }
+ //   public void UpgradeAttackSpeed()
+ //   {
+ //       if (!CurrentPlayer) return;
+ //   }
 }
