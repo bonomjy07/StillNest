@@ -1,4 +1,5 @@
 using System.Collections;
+using FishNet.Object;
 using UnityEngine;
 
 public class Wizard : HeroUnit
@@ -10,12 +11,25 @@ public class Wizard : HeroUnit
 
     protected override void TakeDamage()
     {
-        // base.Attack();
-        if (_currentTarget && _currentTarget.TryGetComponent(out MonsterHealth monsterHealth))
+        // base.TakeDamage();
+        
+        if (_currentTarget && _currentTarget.TryGetComponent(out Monster monster))
         {
-            Transform fireballPoint = _spriteRenderer.flipX ? _fireballPointLeft : _fireballPointRight;
-            Fireball fireball = Instantiate(_fireballPrefab, fireballPoint.position, Quaternion.identity);
-            fireball.Initialize(monsterHealth);
+            SpawnFireball(monster);
         }
+    }
+    
+    [Server]
+    private void SpawnFireball(Monster target)
+    {
+        Transform fireballPoint = _spriteRenderer.flipX ? _fireballPointLeft : _fireballPointRight;
+        Fireball fireball = Instantiate(_fireballPrefab, fireballPoint.position , Quaternion.identity);
+        if (!fireball)
+        {
+            return;
+        }
+        
+        fireball.Initialize(target);
+        Spawn(fireball.gameObject);
     }
 }

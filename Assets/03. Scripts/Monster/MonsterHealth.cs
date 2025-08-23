@@ -46,7 +46,12 @@ public class MonsterHealth : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (_currentHp.Value <= 0 && !_isDead.Value)
+        if (!IsServerInitialized)
+        {
+            return;
+        }
+        
+        if (_currentHp.Value <= 0 && !_isDead.Value) // TODO 이런건 이벤트로 구현해야 한단다. Update가 아니라
         {
             Die();
         }

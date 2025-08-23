@@ -295,11 +295,11 @@ public partial class HeroUnit
 {
     public enum HeroState
     {
-        Idle       = 0,
-        Moving     = 1,
-        Attacking  = 2,
+        Idle = 0,
+        Moving = 1,
+        Attacking = 2,
     }
-    
+
     public struct ReplicateData : IReplicateData
     {
         public Vector3 Destination;
@@ -310,9 +310,13 @@ public partial class HeroUnit
             Destination = destination;
             HasDestination = hasDestination;
         }
-        
+
         private uint _tick;
-        public void Dispose() { }
+
+        public void Dispose()
+        {
+        }
+
         public uint GetTick() => _tick;
         public void SetTick(uint value) => _tick = value;
     }
@@ -320,18 +324,25 @@ public partial class HeroUnit
     public struct ReconcileData : IReconcileData
     {
         public Vector3 Position;
-        
+
         public ReconcileData(Vector3 position) : this()
         {
             Position = position;
         }
 
         private uint _tick;
-        public void Dispose() { }
+
+        public void Dispose()
+        {
+        }
+
         public uint GetTick() => _tick;
         public void SetTick(uint value) => _tick = value;
     }
+}
 
+public partial class HeroUnit
+{
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;

@@ -117,7 +117,7 @@ public class CoopPlayer : NetworkBehaviour
     private void SpawnHeroServerRpc(NetworkConnection conn)
     {
         Vector3 heroSpawnPosition = _placementController.GetFirstEmptyTilePosition();
-        GameObject heroPrefab = _heroPrefabList[1]; // 일단 ㅜ어리어만
+        GameObject heroPrefab = _heroPrefabList[0]; // 일단 ㅜ어리어만
         GameObject heroInstance = Instantiate(heroPrefab, heroSpawnPosition, Quaternion.identity);
         if (!heroInstance)
         {
