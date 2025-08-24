@@ -242,7 +242,7 @@ public partial class HeroUnit : NetworkBehaviour
             return;
         }
 
-        TakeDamage();
+        ApplyDamage();
 
         State = HeroState.Idle;
         
@@ -250,7 +250,7 @@ public partial class HeroUnit : NetworkBehaviour
         _cooldownTimer = _attackCooldown;
     }
 
-    protected virtual void TakeDamage()
+    protected virtual void ApplyDamage()
     {
         if (_currentTarget && _currentTarget.TryGetComponent(out MonsterHealth monster))
         {

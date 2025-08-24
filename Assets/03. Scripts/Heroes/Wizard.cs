@@ -9,7 +9,7 @@ public class Wizard : HeroUnit
     [SerializeField] private Transform _fireballPointRight;
     [SerializeField] private Transform _fireballPointLeft;
 
-    protected override void TakeDamage()
+    protected override void ApplyDamage()
     {
         // base.TakeDamage();
         
