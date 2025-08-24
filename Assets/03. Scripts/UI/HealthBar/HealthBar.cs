@@ -9,7 +9,6 @@ public class HealthBar : MonoBehaviour
 {
     [Header("[Fill]")]
     [SerializeField] private Image _fillImage;
-    [SerializeField] private float _duration = 0.4f;
     [SerializeField] private float _yOffset;
     
     [Header("[Danger]")]
