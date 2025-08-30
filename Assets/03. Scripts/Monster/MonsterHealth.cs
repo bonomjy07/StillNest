@@ -116,7 +116,7 @@ public class MonsterHealth : MonoBehaviour
         HideHealthBar();
     }
 
-    private void ShowMoneyText()
+    protected void ShowMoneyText()
     {
         FloatingMoneyText floatingMoneyText = FloatingMoneyTextManager.Instance.Spawn();
         if (!floatingMoneyText)
@@ -128,7 +128,7 @@ public class MonsterHealth : MonoBehaviour
         floatingMoneyText._onTweenComplete = FloatingMoneyTextManager.Instance.Despawn;
     }
 
-    private void HideHealthBar()
+    protected void HideHealthBar()
     {
         if (!_healthBar)
         {

@@ -69,17 +69,28 @@ public class MainHUD : MonoBehaviour
             upgradeAttackSpeedButton.onClick.AddListener (OnUpgradeAttackSpeedButtonClicked);
         }
 
-        if(upgradeDamageText)
+        if (upgradeDamageText)
         {
             currentPlayer.DamageUp
-                            .Subscribe(level => upgradeDamageText.SetText($"공격력 Up : {level}"))
-                            .AddTo(this);
+                            .Subscribe(level =>
+                            {
+                                if(level < balanceData.maximumUpgradeLevel)
+                                    upgradeDamageText.SetText($"공격력 Up : {level}");
+                                else
+                                    upgradeDamageText.SetText($"공격력 Up : Max");
+                            }).AddTo(this);
         }
 
         if (upgradeAttackSpeedText)
         {
             currentPlayer.AttackSpeedUp
-                            .Subscribe(level => upgradeAttackSpeedText.SetText($"공격속도 Up : {level}"))
+                            .Subscribe(level =>
+                            {
+                                if (level < balanceData.maximumUpgradeLevel)
+                                    upgradeAttackSpeedText.SetText($"공격속도 Up : {level}");
+                                else
+                                    upgradeAttackSpeedText.SetText($"공격속도 Up : Max");
+                            })
                             .AddTo(this);
         }
     }

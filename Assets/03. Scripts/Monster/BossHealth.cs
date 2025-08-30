@@ -45,9 +45,13 @@ public class BossHealth : MonsterHealth
     protected override IEnumerator DestroyAfterDeath()
     {
         _animator.SetTrigger(DeathClipId);
+
+        ShowMoneyText();
         yield return new WaitForSeconds(_deathAnimDuration);
         
         _spawnManager.OnMonsterDeath(gameObject, MonsterType.Boss);
         Destroy(gameObject);
+
+        HideHealthBar();
     }
 }

@@ -18,9 +18,10 @@ public class Fireball : MonoBehaviour
 	
 	private bool IsInvalidTarget => _target == null || _target.IsDead;
 
-	public void Initialize(MonsterHealth target)
+	public void Initialize(MonsterHealth target, int dmg)
 	{
 		_target = target;
+		damage = dmg;
 	}
 
 	private void Update()
