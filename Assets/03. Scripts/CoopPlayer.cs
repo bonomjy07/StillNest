@@ -10,8 +10,6 @@ using UnityEngine;
 
 public class CoopPlayer : NetworkBehaviour
 {
-    public static CoopPlayer Local { get; private set; }
-    
     [Header("[Spawn Hero]")]
     [SerializeField] private HeroPlacementController _placementController;
     [SerializeField] private NetworkObject _heroesRoot;
@@ -81,7 +79,6 @@ public class CoopPlayer : NetworkBehaviour
         }
 
         // Notify
-        Local = this;
         GameEventHub.Instance
                     .RaiseLocalClientOn(this);
 
@@ -90,14 +87,6 @@ public class CoopPlayer : NetworkBehaviour
                     .OnHeroSpawnButtonClick
                     .Subscribe(unit => SpawnHeroServerRpc(Owner))
                     .AddTo(this);
-    }
-
-    public override void OnStopClient()
-    {
-        if (IsOwner)
-        {
-            Local = this;
-        }
     }
 
     private void OnMonsterDeath(int money)

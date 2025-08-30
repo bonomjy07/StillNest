@@ -15,18 +15,12 @@ public class MainHUD : MonoBehaviour
 	{
 		GameEventHub.Instance
 		            .OnLocalClient
-		            .Subscribe(client => Init())
+		            .Subscribe(BindForLocalClient)
 		            .AddTo(this);
 	}
 
-	private void Init()
+	private void BindForLocalClient(CoopPlayer localClient)
 	{
-		CoopPlayer localClient = CoopPlayer.Local;
-		if (!localClient)
-		{
-			return;
-		}
-		
 		if (moneyText)
 		{
 			localClient.OnMoneyChanged
