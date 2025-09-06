@@ -1,14 +1,18 @@
 ﻿using System.Collections;
+using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using UnityEngine;
+using UnityEngine.Events;
 
-public class MonsterHealth : MonoBehaviour
+public class MonsterHealth : NetworkBehaviour
 {
-    [SerializeField] protected float _maxHp;
-    [SerializeField] protected float _currentHp;
     [SerializeField] protected float _deathAnimDuration = 0.22f; // Death 애니메이션 실행시간
-    protected int _money = 20;
-    protected bool _isDead;
-    protected int _wave;
+    [SerializeField] protected int _money = 20;
+    public int _wave;
+
+    protected readonly SyncVar<float> _maxHp = new();
+    protected readonly SyncVar<float> _currentHp = new();
+    protected readonly SyncVar<bool> _isDead = new();
 
     protected SpawnManager _spawnManager;
     protected Animator _animator;
@@ -19,50 +23,88 @@ public class MonsterHealth : MonoBehaviour
     protected static readonly int TakeHitClipId = Animator.StringToHash("TakeHit");
     protected static readonly int DeathClipId = Animator.StringToHash("Death");
 
+    public bool IsDead => _currentHp.Value <= 0;
+    public int Money => _money; // or _wave * 10;
     public GameBalanceData balanceData;
 
-    public bool IsDead => _currentHp <= 0;
-    public int Money => _money;
 
-    void Start()
+    public event SyncVar<bool>.OnChanged OnDeadChange
     {
+        add => _isDead.OnChange += value;
+        remove => _isDead.OnChange -= value;
+    }
+    
+    protected virtual void Awake()
+    {
+        _spawnManager = GameObject.Find("Spawn Manager")
+                                  .GetComponent<SpawnManager>(); // SpawnManager script
+        _monsterMoving = GetComponent<MonsterMoving>();
+        _animator = GetComponent<Animator>();
         
-        //StartCoroutine(TempDotDamage()); // For Test
+        _currentHp.OnChange += OnHpChange;
+        
+        balanceData = Resources.Load<GameBalanceData>("ScriptableObjects/GameBalanceData");
+        _money = balanceData.monsterKillGold;
     }
 
+    
+    // Update is called once per frame
     void Update()
     {
-        if (_currentHp <= 0 && !_isDead)
+        if (!IsServerInitialized)
+        {
+            return;
+        }
+        
+        if (_currentHp.Value <= 0 && !_isDead.Value) // TODO 이런건 이벤트로 구현해야 한단다. Update가 아니라
         {
             Die();
         }
     }
-    protected virtual void Awake()
+
+    private void OnHpChange(float prev, float next, bool asServer)
     {
-        _spawnManager = GameObject.Find("Spawn Manager").GetComponent<SpawnManager>();
-        _monsterMoving = GetComponent<MonsterMoving>();
-        _animator = GetComponent<Animator>();
-        _isDead = false;
-        balanceData = Resources.Load<GameBalanceData>("ScriptableObjects/GameBalanceData");
-        _money = balanceData.monsterKillGold;
+        if (asServer)
+        {
+            return;
+        }
+
+        if (!_healthBar)
+        {
+            return;
+        }
+        
+        float healthPercentage = next / _maxHp.Value;
+        _healthBar.SetBar(healthPercentage, transform);
     }
 
     public virtual void Initialize(int wave)
     {
         _wave = wave;
         
-        _maxHp = 50 + (_wave - 1) * 20;
-        _currentHp = _maxHp;
+        _maxHp.Value = 50 + (_wave - 1) * 20;
+        _currentHp.Value = _maxHp.Value;
     }
     public void TakeDamage(float dmg)
     {
-        if(!_isDead)
+        if (!_isDead.Value)
         {
-            _currentHp -= dmg;
-            _animator.ResetTrigger(TakeHitClipId);
-            _animator.SetTrigger(TakeHitClipId);
+            _currentHp.Value -= dmg;
+        }
+
+        TakeDamageClientRpc();
+    }
+
+    [ObserversRpc]
+    private void TakeDamageClientRpc()
+    {
+        if (IsDead)
+        {
+            return;
         }
         
+        _animator.ResetTrigger(TakeHitClipId);
+        _animator.SetTrigger(TakeHitClipId);
         ShowHealthBar();
     }
 
@@ -78,17 +120,18 @@ public class MonsterHealth : MonoBehaviour
             return;
         }
         
-        float healthPercentage = _currentHp / _maxHp;
+        float healthPercentage = _currentHp.Value / _maxHp.Value;
         _healthBar.SetBar(healthPercentage, transform);
     }
 
     protected IEnumerator TempDotDamage()
     {
-        while(_currentHp > 0)
+        // 임시로 유닛을 사용하지 않고 몬스터의 Die로직을 처리하기위해 초당 도트템 적용
+        while(_currentHp.Value > 0)
         {
             yield return new WaitForSeconds(2f);
-            _currentHp -= 20f;
-            
+            _currentHp.Value -= 20f;
+            //_animator.SetTrigger("TakeHit");
             _animator.ResetTrigger(TakeHitClipId);
             _animator.SetTrigger(TakeHitClipId);
         }
@@ -96,23 +139,36 @@ public class MonsterHealth : MonoBehaviour
 
     protected virtual void Die()
     {
-        _isDead = true;
-        
-        _monsterMoving.NoticeMonsterDeath();
+        _isDead.Value = true;
+        // Notice to MonsterMoving
         StartCoroutine(DestroyAfterDeath());
     }
 
     protected virtual IEnumerator DestroyAfterDeath()
     {
+        BeginDeathClientRpc();
+        
+        yield return new WaitForSeconds(_deathAnimDuration + 0.1f); // 바로죽으면 애님 갑자기 사라져보임.
+        
+        Monster mob = GetComponent<Monster>();
+        _spawnManager.OnMonsterDeath(mob.gameObject, mob.MobType);
+
+        EndDeathClientRpc();
+            
+        Despawn();
+    }
+
+    [ObserversRpc]
+    private void BeginDeathClientRpc()
+    {
         _animator.SetTrigger(DeathClipId);
 
         ShowMoneyText();
-        
-        yield return new WaitForSeconds(_deathAnimDuration);
-        
-        _spawnManager.OnMonsterDeath(gameObject, MonsterType.General);
-        Destroy(gameObject);
-        
+    }
+
+    [ObserversRpc]
+    private void EndDeathClientRpc()
+    {
         HideHealthBar();
     }
 

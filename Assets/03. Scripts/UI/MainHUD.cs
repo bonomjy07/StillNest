@@ -1,7 +1,6 @@
 ﻿using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using UniRx;
 
@@ -10,6 +9,7 @@ public class MainHUD : MonoBehaviour
     [Header("[Player]")]
     public Button spawnHeroButton;
     public TMP_Text moneyText;
+	public GameObject hostMarker;
 
     [Header("[Upgrade]")]
     public Button upgradeDamageButton;
@@ -22,33 +22,38 @@ public class MainHUD : MonoBehaviour
     private void Awake()
     {
         balanceData = Resources.Load<GameBalanceData>("ScriptableObjects/GameBalanceData");
-        Init();
-    }
+        
+		GameEventHub.Instance
+		            .OnLocalClient
+		            .Subscribe(BindForLocalClient)
+		            .AddTo(this);
+	}
 
-    private void Init()
-    {
-        Player currentPlayer = PlayerManager.Instance.CurrentPlayer;
-        if (!currentPlayer)
-        {
-            return;
-        }
+	private void BindForLocalClient(CoopPlayer localClient)
+	{
+		if (moneyText)
+		{
+			localClient.OnMoneyChanged
+			           .Subscribe(money => moneyText.SetText($"{money}"))
+			           .AddTo(this);
+		}
 
-        if (moneyText)
-        {
-            currentPlayer.Money
-                         .Subscribe(money => moneyText.SetText($"{money}"))
-                         .AddTo(this);
-        }
 
+		if (hostMarker)
+		{
+			hostMarker.SetActive(localClient.IsHostInitialized);
+		}
+		
         if (spawnHeroButton)
         {
-            currentPlayer.Money
-                         .Subscribe(money => spawnHeroButton.interactable = money >= balanceData.heroCost)
-                         .AddTo(this);
+            localClient.OnMoneyChanged
+                       .Subscribe(money => spawnHeroButton.interactable = money >= balanceData.heroCost)
+                       .AddTo(this);
 
             spawnHeroButton.onClick.AddListener(OnSpawnHeroButtonClicked);
         }
 
+		Player currentPlayer = PlayerManager.Instance.CurrentPlayer;
         if (upgradeDamageButton)
         {
             currentPlayer.Money
@@ -93,29 +98,28 @@ public class MainHUD : MonoBehaviour
                             })
                             .AddTo(this);
         }
-    }
+	}
 
     private void OnSpawnHeroButtonClicked()
     {
+        /*
         Player currentPlayer = PlayerManager.Instance.CurrentPlayer;
         if (currentPlayer && currentPlayer.HasEnoughMoney)
         {
             PlayerManager.Instance.SpawnHero();
         }
+        */
+        
+        GameEventHub.Instance.RaiseHeroSpawnClick();
     }
 
     private void OnUpgradeDamageButtonClicked()
     {
-        Player currentPlayer = PlayerManager.Instance.CurrentPlayer;
-        if (currentPlayer && currentPlayer.HasEnoughMoney)
-            PlayerManager.Instance.CurrentPlayer.UpgradeDamage();
+        GameEventHub.Instance.RaiseDamageUpClick();
     }
+    
     private void OnUpgradeAttackSpeedButtonClicked()
     {
-        Player currentPlayer = PlayerManager.Instance.CurrentPlayer;
-        if (currentPlayer && currentPlayer.HasEnoughMoney)
-            PlayerManager.Instance.CurrentPlayer.UpgradeAttackSpeed();
+        GameEventHub.Instance.RaiseAttackSpeedUpClick();
     }
-
-
 }

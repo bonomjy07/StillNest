@@ -1,5 +1,4 @@
 ﻿using System;
-using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -37,8 +36,11 @@ public class DuoMap : MonoBehaviour
 
     private void Start()
     {
-        // 1p만 적용
-        hero2PlayerTileMap.gameObject.SetActive(false);
+        // Placementcontroller에서 차피 킴.
+        hero1PlayerTileMap.GetComponent<TilemapRenderer>()
+                          .enabled = false;
+        hero2PlayerTileMap.GetComponent<TilemapRenderer>()
+                          .enabled = false;
     }
 
     public Tilemap GetMyHeroTileMap(int playerIndex = 0)
@@ -65,8 +67,8 @@ public class DuoMap : MonoBehaviour
     {
         return playerIndex switch
         {
-            0 => spawn1PlayerTileMap,
-            1 => spawn2PlayerTileMap,
+            1 => spawn1PlayerTileMap,
+            2 => spawn2PlayerTileMap,
             _ => throw new ArgumentOutOfRangeException(nameof(playerIndex), playerIndex, null)
         };
     }
@@ -75,8 +77,8 @@ public class DuoMap : MonoBehaviour
     {
         return playerIndex switch
         {
-            0 => path1PlayerTilemap,
-            1 => path2PlayerTilemap,
+            1 => path1PlayerTilemap,
+            2 => path2PlayerTilemap,
             _ => throw new ArgumentOutOfRangeException(nameof(playerIndex), playerIndex, null)
         };
     }

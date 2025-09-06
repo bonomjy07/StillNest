@@ -1,8 +1,14 @@
-﻿using TMPro;
+﻿using System;
+using System.Collections.Generic;
+using FishNet;
+using FishNet.Connection;
+using FishNet.Object.Synchronizing;
+using TMPro;
+using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GameManager : Singleton<GameManager>
+public class GameManager : NetworkSingleton<GameManager>
 {
     [Header("Title")]
     [SerializeField] private GameObject _titlePanel;
@@ -15,84 +21,104 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] private Button _goHomeButton;
 
     [SerializeField] private GameObject _mainHUD;
-    public GameState CurrentState { get; private set; } = GameState.Title;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public GameState CurrentState
+    {
+        get => _currentState.Value; 
+        private set => _currentState.Value = value;
+    }
+    private readonly SyncVar<GameState> _currentState = new();
+    
+    private readonly List<CoopPlayer> _coopPlayers = new();
+
+    protected override void Awake()
+    {
+        Time.timeScale = 1f;
+
+        _gameOverPanel.SetActive(true);
+
+        GameEventHub.Instance
+                    .OnLocalClient
+                    .Subscribe(player => _coopPlayers.Add(player))
+                    .AddTo(this);
+        
+        _currentState.OnChange += OnStateChange;
+    }
+
+    private void OnStateChange(GameState prev, GameState next, bool asServer)
+    {
+        if (!asServer)
+        {
+            if (next == GameState.Playing)
+            {
+                _titlePanel.SetActive(false);
+                _mainHUD.SetActive(true);
+            }
+            else if (next == GameState.Gameover)
+            {
+                Time.timeScale = 0f; // stop
+
+                _gameOverPanel.SetActive(true);
+            }
+            else if (next == GameState.Title)
+            {
+                Time.timeScale = 1f;
+
+                _titlePanel.SetActive(true);
+                _gameOverPanel.SetActive(false);
+                _mainHUD.SetActive(false);
+            }
+        }
+    }
+
+    private void Start()
     {
         ShowTitle();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
-    protected override void Awake()
-    {
-        base.Awake();
-        Time.timeScale = 1f;
-
-        _gameOverPanel.SetActive(true);
-    }
-
-    public void ShowTitle()
+    private void ShowTitle()
     {
         CurrentState = GameState.Title;
         _startButton.onClick.AddListener(OnGameStartButtonClicked);
         _goHomeButton.onClick.AddListener(OnGoHomeButtonClicked);
-
-        _titlePanel.SetActive(true);
-        _mainHUD?.SetActive(false);
-        _gameOverPanel.SetActive(false);
-
     }
 
     private void OnGameStartButtonClicked()
     {
-        CurrentState = GameState.Playing;
-        
-        _titlePanel.SetActive(false);
-        _mainHUD.SetActive(true);
+        if (IsServerInitialized)
+        {
+            CurrentState = GameState.Playing;
+        }
     }
 
     public void GameOver()
     {
-        CurrentState = GameState.Gameover;
-        Time.timeScale = 0f; // stop
-
-        _gameOverPanel.SetActive(true);
+        if (IsServerInitialized)
+        {
+            CurrentState = GameState.Gameover;
+        }
     }
 
     private void OnGoHomeButtonClicked()
     {
-        Time.timeScale = 1f;
         ResetGame();
     }
 
-
     private void ResetGame()
     {
-        CurrentState = GameState.Title;
-        Time.timeScale = 1f;
-
-        _titlePanel?.SetActive(true);
-        _gameOverPanel?.SetActive(false);
-        _mainHUD?.SetActive(false);
-
-        // SpawnManager Reset
-        SpawnManager.Instance.ResetSetting();
-
-        // PlacementManager Reset
-        PlacementManager.Instance.ResetSetting();
-        PlayerManager.Instance.CurrentPlayer.ResetSetting();
-
         // HealthBar, FloatingMoney Reset
-        HealthBarManager.Instance.ResetSetting();
-        FloatingMoneyTextManager.Instance.ResetSetting();
+        if (IsClientInitialized)
+        {
+            HealthBarManager.Instance.ResetSetting();
+            FloatingMoneyTextManager.Instance.ResetSetting();
+        }
 
+        if (IsServerInitialized)
+        {
+            CurrentState = GameState.Title;
+        }
+
+        SpawnManager.Instance.ResetSetting();
+        _coopPlayers.ForEach(player => player.Clear());
     }
-
-
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using UniRx;
+using FishNet.Object;
 using UnityEngine;
 
 public class Wizard : HeroUnit
@@ -10,46 +11,25 @@ public class Wizard : HeroUnit
     [SerializeField] private Transform _fireballPointRight;
     [SerializeField] private Transform _fireballPointLeft;
 
-    protected override void Attack()
+    protected override void ApplyDamage()
     {
-        // base.Attack();
-        if (_currentTarget && _currentTarget.TryGetComponent(out MonsterHealth monsterHealth))
+        if (_currentTarget && _currentTarget.TryGetComponent(out Monster monster))
         {
-            Transform fireballPoint = _spriteRenderer.flipX ? _fireballPointLeft : _fireballPointRight;
-            Fireball fireball = Instantiate(_fireballPrefab, fireballPoint.position, Quaternion.identity);
-            fireball.Initialize(monsterHealth, _damageAmount);
+            SpawnFireball(monster);
         }
     }
-
-    private void Start()
+    
+    [Server]
+    private void SpawnFireball(Monster target)
     {
-        Player currentPlayer = PlayerManager.Instance.CurrentPlayer;
-        if (currentPlayer != null)
+        Transform fireballPoint = _spriteRenderer.flipX ? _fireballPointLeft : _fireballPointRight;
+        Fireball fireball = Instantiate(_fireballPrefab, fireballPoint.position , Quaternion.identity);
+        if (!fireball)
         {
-            currentPlayer.DamageUp
-                         .Subscribe(UpgradeDamage)
-                         .AddTo(this);
+            return;
         }
-
-        if (currentPlayer != null)
-        {
-            currentPlayer.AttackSpeedUp
-                         .Subscribe(UpgradeAttackSpeed)
-                         .AddTo(this);
-        }
-    }
-
-    private void UpgradeDamage(int level)
-    {
-        //_damageAmount += 10 * level;
-        //_damageAmount += 20;
-        _damageAmount = 50 + (20 * level);
-    }
-
-    private void UpgradeAttackSpeed(int level)
-    {
-        //_attackCooldown = Math.Max((float)0.25, _attackCooldown - (float)(0.1 * level));
-        //_attackCooldown = Math.Max((float)0.25, _attackCooldown - (float)(0.1));
-        _attackCooldown = Math.Max((float)0.3, (float)(0.8 - (0.05 * level)));
+        
+        fireball.Initialize(target, _damageAmount);
+        Spawn(fireball.gameObject);
     }
 }

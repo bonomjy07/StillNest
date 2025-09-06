@@ -2,12 +2,14 @@
 
 public enum PlayerNumber
 {
-    Player1 = 0,
-    Player2 = 1
+    None = 0,
+    Player1 = 1,
+    Player2 = 2
 }
 public enum MonsterType
 {
-    General = 0,
+    None = 0,
+    General,
     Boss
 }
 

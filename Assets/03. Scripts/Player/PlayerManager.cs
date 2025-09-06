@@ -33,23 +33,6 @@ public class PlayerManager : Singleton<PlayerManager>
 		}
 	}
 
-	public void SpawnHero()
-	{
-		if (!CurrentPlayer)
-		{
-			return;
-		}
-		
-		HeroUnit hero = PlacementManager.Instance.SpawnHero();
-		if (!hero)
-		{
-			return;
-		}
-		
-		CurrentPlayer.AddHero(hero);
-		CurrentPlayer.SpendMoney(balanceData.heroCost);
-	}
-
 	//public void UpgradeDamage()
 	//{
 	//	if (!CurrentPlayer) return;

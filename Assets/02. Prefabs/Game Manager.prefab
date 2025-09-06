@@ -62,5 +62,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a48586b5d4e6bc94b846b3bdcaf55225, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _gameTitle: {fileID: 0}
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
+  _titlePanel: {fileID: 0}
+  _gameTitleText: {fileID: 0}
   _startButton: {fileID: 0}
+  _gameOverPanel: {fileID: 0}
+  _gameOverText: {fileID: 0}
+  _goHomeButton: {fileID: 0}
+  _mainHUD: {fileID: 0}

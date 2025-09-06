@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Tilemaps;
 
-public class PlacementManager : Singleton<PlacementManager>
+using Random = UnityEngine.Random;
+
+public class HeroPlacementController : MonoBehaviour //NetworkBehaviour
 {
     [Header("[Highlight]")]
     [SerializeField] private Tile _currentTileHighlight; // 유닛 선택 위치용
@@ -15,12 +18,10 @@ public class PlacementManager : Singleton<PlacementManager>
     [SerializeField] private DottedLineDrawer _lineDrawer;
 
     [Header("유닛 설정")]
-    [SerializeField] private Transform _unitRoot;
     [SerializeField] private List<GameObject> _heroPrefabList;
 
-    // 영웅 배치
-    private Grid _grid;
-    private Tilemap _heroTileMap;
+    public UnityAction<HeroUnit, Vector3Int, Vector3Int, Vector3> OnMoveTo;
+    
     
     // 하이라이트
     private TilemapRenderer _heroTileMapRenderer;
@@ -35,13 +36,14 @@ public class PlacementManager : Singleton<PlacementManager>
     // 유닛선택 타일
     private Vector3Int? _selectedCell;
     private Vector3Int? _targetCell;
-
+    
+    // 영웅 배치
+    private Grid Grid => DuoMap.Inst.grid;
+    private Tilemap _heroTileMap;
+    
     private void Start()
     {
         // Map Setting
-        _grid = DuoMap.Inst.grid;
-        _heroTileMap = DuoMap.Inst.GetMyHeroTileMap();
-        _heroTileMapRenderer = DuoMap.Inst.GetMyHeroTileMapRenderer();
         _selectTileMap = DuoMap.Inst.selectHighlightTileMap;
         
         // Highlight Color
@@ -50,13 +52,14 @@ public class PlacementManager : Singleton<PlacementManager>
 
     private void Update()
     {
-        if(GameManager.Instance.CurrentState == GameState.Playing)
+        if (GameManager.Instance.CurrentState != GameState.Playing)
         {
-            Vector3Int mouseCellPos = GetMouseCellPosition();
-
-            HandleNormalMode(mouseCellPos);
+            return;
         }
         
+        Vector3Int mouseCellPos = GetMouseCellPosition();
+
+        HandleNormalMode(mouseCellPos);
     }
 
     private void HandleNormalMode(Vector3Int cellPos)
@@ -95,30 +98,27 @@ public class PlacementManager : Singleton<PlacementManager>
     private void MoveUnit(GameObject unitObject, Vector3Int from, Vector3Int to)
     {
         Vector3 worldPos = _heroTileMap.GetCellCenterWorld(to);
-
-        HeroUnit unit = unitObject.GetComponent<HeroUnit>();
-        if (unit) 
-        {
-            unit.MoveTo(worldPos);
-        }
+        
+        OnMoveTo?.Invoke(unitObject.GetComponent<HeroUnit>(), from, to, worldPos);
 
         _unitMap.Remove(from);
         _unitMap[to] = unitObject;
-        Debug.Log($"유닛 이동 완료: {from} → {to}");
+        
+        Debug.Log($"유닛 이동 요청: {from} → {to}");
     }
-
+    
     private Vector3Int GetMouseCellPosition()
     {
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         worldPos.z = 0;
-        return _grid.WorldToCell(worldPos);
+        return Grid.WorldToCell(worldPos);
     }
 
     private bool IsEmptyTile(Vector3Int cellPos)
     {
         TileBase currentTile = _heroTileMap.GetTile(cellPos);
-        return  currentTile && !_unitMap.ContainsKey(cellPos);
-        //return _placeableTiles.Contains(currentTile) && !_unitMap.ContainsKey(cellPos);
+        bool isEmpty = currentTile != null && !_unitMap.ContainsKey(cellPos);
+        return isEmpty;
     }
 
     private void SelectCell(Vector3Int cellPos)
@@ -191,7 +191,13 @@ public class PlacementManager : Singleton<PlacementManager>
         _lineDrawer.Draw(fromWorld, toWorld);
     }
 
-    public HeroUnit SpawnHero()
+    public void SetPlayerIndex(int playerIndex)
+    {
+        _heroTileMap = DuoMap.Inst.GetMyHeroTileMap(playerIndex);
+        _heroTileMapRenderer = DuoMap.Inst.GetMyHeroTileMapRenderer(playerIndex);
+    }
+
+    public Vector3 GetFirstEmptyTilePosition()
     {
         BoundsInt bounds = _heroTileMap.cellBounds;
 
@@ -211,16 +217,18 @@ public class PlacementManager : Singleton<PlacementManager>
                     continue;
                 }
 
-                Vector3 worldPos = _heroTileMap.GetCellCenterWorld(cellPos);
-                GameObject unitPrefab = _heroPrefabList[Random.Range(0, _heroPrefabList.Count)];
-                GameObject unitInstance = Instantiate(unitPrefab, worldPos, Quaternion.identity, _unitRoot);
-                _unitMap[cellPos] = unitInstance;
-
-                return unitInstance.GetComponent<HeroUnit>();
+                // 비어있는 타일의 중심 월드 좌표 리턴
+                return _heroTileMap.GetCellCenterWorld(cellPos);
             }
         }
 
-        return null;
+        return Vector3.zero;
+    }
+
+    public void AddSpawnedUnit(GameObject unit)
+    {
+        Vector3Int cellPos = Grid.WorldToCell(unit.transform.position);
+        _unitMap[cellPos] = unit;
     }
 
     public void ResetSetting()

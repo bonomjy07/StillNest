@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using UnityEngine;
 
-public class Fireball : MonoBehaviour
+public class Fireball : NetworkBehaviour
 {
 	[Header("[Properties]")]
 	public float speed = 4f;
@@ -11,14 +15,20 @@ public class Fireball : MonoBehaviour
 	[SerializeField] private Animator _animator;
 	[SerializeField] private float _destroyDelay = 0.06f;
 
-	private MonsterHealth _target;
+	private Monster _target;
 
-	private bool _hasExploded;
+	private readonly SyncVar<bool> _serverHasExploded = new();
 	private static readonly int ExplodeHash = Animator.StringToHash("Explode");
 	
+	private bool HasExploded
+	{
+		get => _serverHasExploded.Value;
+		set => _serverHasExploded.Value = value;
+	}
+
 	private bool IsInvalidTarget => _target == null || _target.IsDead;
 
-	public void Initialize(MonsterHealth target, int dmg)
+	public void Initialize(Monster target, int dmg)
 	{
 		_target = target;
 		damage = dmg;
@@ -26,15 +36,19 @@ public class Fireball : MonoBehaviour
 
 	private void Update()
 	{
-		if (!_hasExploded)
+		if (IsServerInitialized)
 		{
-			UpdatePosition();
-			UpdateRotation();
-		}
+			if (!HasExploded)
+			{
+				UpdatePosition();
+				UpdateRotation();
+			}
 
-		if (IsInvalidTarget)
-		{
-			Explode();
+			// Self destruct if no target or target is invalid
+			if (IsInvalidTarget)
+			{
+				Explode();
+			}
 		}
 	}
 
@@ -63,22 +77,44 @@ public class Fireball : MonoBehaviour
 
 	private void OnTriggerEnter2D(Collider2D other)
 	{
-		MonsterHealth monster = other.GetComponent<MonsterHealth>();
-		if (!monster)
+		if (HasExploded)
+		{
+			// TODO disable further collisions instead of 'hasExploded' check
+			return;
+		}
+        
+		MonsterHealth monsterHealth = other.GetComponent<MonsterHealth>();
+		if (!monsterHealth)
 		{
 			return;
 		}
 		
-		monster.TakeDamage(damage);
+		monsterHealth.TakeDamage(damage);
 		Explode();
 	}
 
 	private void Explode()
 	{
-		_hasExploded = true;
+		HasExploded = true;
 		
-		_animator.SetTrigger(ExplodeHash);
+		PlayExplodeAnimation();
+
+		StartCoroutine(ExplodeDelay());
+	}
+	
+	[ObserversRpc]
+	private void PlayExplodeAnimation()
+	{
+		if (_animator)
+		{
+			_animator.SetTrigger(ExplodeHash);
+		}
+	}
+
+	private IEnumerator ExplodeDelay()
+	{
+		yield return new WaitForSeconds(_destroyDelay);
 		
-		Destroy(gameObject, _destroyDelay);
+		Despawn();
 	}
 }

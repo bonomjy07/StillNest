@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8514380133998939007}
   - component: {fileID: 3240517437068684679}
   m_Layer: 0
-  m_Name: Placementmanager
+  m_Name: PlacementController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,10 +46,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7666473646471474bb5da3b5f7c8be1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _grid: {fileID: 0}
-  _tilemap: {fileID: 0}
-  _highlightTilemap: {fileID: 0}
-  _highlightTile: {fileID: 11400000, guid: 61d1032035e2c5b4a807ba192ca36189, type: 2}
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
   _currentTileHighlight: {fileID: 11400000, guid: 61d1032035e2c5b4a807ba192ca36189, type: 2}
   _targetTileHighlight: {fileID: 11400000, guid: 61d1032035e2c5b4a807ba192ca36189, type: 2}
   _placeableTiles:
@@ -86,7 +85,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0c3d2d51012ed4540b9fbc22ff1bbe6e, type: 2}
   - {fileID: 11400000, guid: 42b5c5e3fb12c91418860c9052d98521, type: 2}
   _lineDrawer: {fileID: 2527129728605810825}
-  _unitRoot: {fileID: 7757623348379424119}
   _heroPrefabList:
   - {fileID: 7296787482729890596, guid: 5f3e5e8c924b5614ea27b34c173d256b, type: 3}
   - {fileID: 7296787482729890596, guid: 7fe3cc6eabfe59c4aa39c6bdc4af5c2a, type: 3}

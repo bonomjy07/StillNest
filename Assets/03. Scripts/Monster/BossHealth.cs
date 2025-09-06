@@ -12,7 +12,7 @@ public class BossHealth : MonsterHealth
 
     void Update()
     {
-        if (_currentHp <= 0 && !_isDead)
+        if (_currentHp.Value <= 0 && !_isDead.Value)
         {
             Die();
         }
@@ -23,7 +23,6 @@ public class BossHealth : MonsterHealth
         _spawnManager = GameObject.Find("Spawn Manager").GetComponent<SpawnManager>(); // SpawnManager script
         _bossMoving = GetComponent<BossMoving>();
         _animator = GetComponent<Animator>();
-        _isDead = false;
         balanceData = Resources.Load<GameBalanceData>("ScriptableObjects/GameBalanceData");
         _money = balanceData.bossKillGold;
     }
@@ -31,14 +30,13 @@ public class BossHealth : MonsterHealth
     public override void Initialize(int wave)
     {
         _wave = wave;
-        _maxHp = _wave * 1000;
-        _currentHp = _maxHp;
+        _maxHp.Value = _wave * 1000;
+        _currentHp.Value = _maxHp.Value;
     }
 
     protected override void Die()
     {
-        _isDead = true;
-        _bossMoving.NoticeMonsterDeath();
+        _isDead.Value = true;
         StartCoroutine(DestroyAfterDeath());
     }
 
@@ -49,7 +47,8 @@ public class BossHealth : MonsterHealth
         ShowMoneyText();
         yield return new WaitForSeconds(_deathAnimDuration);
         
-        _spawnManager.OnMonsterDeath(gameObject, MonsterType.Boss);
+        Monster mob = GetComponent<Monster>();
+        _spawnManager.OnMonsterDeath(mob.gameObject, mob.MobType);
         Destroy(gameObject);
 
         HideHealthBar();

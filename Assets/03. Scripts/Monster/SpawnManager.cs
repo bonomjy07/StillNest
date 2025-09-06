@@ -1,10 +1,13 @@
-﻿using System.Collections;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Tilemaps;
+using FishNet.Object;
+using Random = UnityEngine.Random;
 
-public class SpawnManager : Singleton<SpawnManager>
+public class SpawnManager : NetworkSingleton<SpawnManager>
 {
     [SerializeField] private GameObject[] _monsterPrefabs;
     [SerializeField] private GameObject[] _bossPrefabs;
@@ -40,10 +43,10 @@ public class SpawnManager : Singleton<SpawnManager>
     private List<GameObject> _spawnedBossList = new List<GameObject>();
     public GameBalanceData balanceData;
 
-    void Start()
+    private void Start()
     {
-        _spawnTilemap1 = DuoMap.Inst.GetSpawnTileMap();
-        _spawnTilemap2 = DuoMap.Inst.GetSpawnTileMap(1);
+        _spawnTilemap1 = DuoMap.Inst.GetSpawnTileMap(1);
+        _spawnTilemap2 = DuoMap.Inst.GetSpawnTileMap(2);
         
         _generalSpawnPosition1 = GetSpawnPosition(_spawnTilemap1, MonsterType.General);
         _generalSpawnPosition2 = GetSpawnPosition(_spawnTilemap2, MonsterType.General);
@@ -60,13 +63,12 @@ public class SpawnManager : Singleton<SpawnManager>
         StartCoroutine(SpawnLoop());
     }
 
-    void Update()
+    private void Update()
     {
         if (_monsterCount >= _monsterLimit && GameManager.Instance.CurrentState == GameState.Playing)
         {
             GameManager.Instance.GameOver();
         }
-
     }
 
     private Vector2 GetSpawnPosition(Tilemap tilemap, MonsterType type)
@@ -81,14 +83,18 @@ public class SpawnManager : Singleton<SpawnManager>
         }
 
         if (type == MonsterType.General)
+        {
             spawnPos2D = new Vector2(worldPos.x, worldPos.y + _generalMonsterOffsetY);
-        else if(type == MonsterType.Boss)
+        }
+        else if (type == MonsterType.Boss)
+        {
             spawnPos2D = new Vector2(worldPos.x, worldPos.y + _bossMonsterOffsetY);
+        }
 
         return spawnPos2D;
     }
 
-    IEnumerator SpawnLoop()
+    private IEnumerator SpawnLoop()
     {
         while (_currentWave <= _endWave)
         {
@@ -123,33 +129,52 @@ public class SpawnManager : Singleton<SpawnManager>
         }
     }
 
-    IEnumerator SpawnWave(int wave, PlayerNumber playerNum, int monsterIndex)
+    private IEnumerator SpawnWave(int wave, PlayerNumber playerNum, int monsterIndex)
     {
         Vector2 pos = new Vector2();
         if (playerNum == PlayerNumber.Player1)
+        {
             pos = _generalSpawnPosition1;
+        }
         else if (playerNum == PlayerNumber.Player2)
+        {
             pos = _generalSpawnPosition2;
+        }
 
         for (int i = 0; i < _monsterPerWave; i++)
         {
-            GameObject mob = Instantiate(_monsterPrefabs[monsterIndex], pos, Quaternion.identity, _monsterRoot);
-            mob.GetComponent<MonsterMoving>().Initialize(playerNum, MonsterType.General);
-            mob.GetComponent<MonsterHealth>().Initialize(wave);
-            _spawnedMonsterList.Add(mob);
+            if (IsServerInitialized)
+            {
+                GameObject mobGo = Instantiate(_monsterPrefabs[monsterIndex], pos, Quaternion.identity);
+                Monster mob = mobGo.GetComponent<Monster>();
+                mob.Movement.Initialize(playerNum, MonsterType.General);
+                mob.Health.Initialize(wave);
+                mob.name += $"idx:{i}, player:{playerNum}"; // 이름은 동기화안될껄?
+
+                Spawn(mob.NetworkObject, null);
+                mob.NetworkObject.SetParent(_monsterRoot.GetComponent<NetworkObject>());
+
+                _spawnedMonsterList.Add(mob.gameObject);
+            }
+
             _monsterCount++;
 
             gameInfoUIManager.UpdateMonsterCount(_monsterCount, _monsterLimit);
             yield return new WaitForSeconds(_spawnTerms);
         }
     }
-    void SpawnBossWave(int wave, PlayerNumber playerNum, int bossIndex)
+
+    private void SpawnBossWave(int wave, PlayerNumber playerNum, int bossIndex)
     {
         Vector2 pos = new Vector2();
         if (playerNum == PlayerNumber.Player1)
+        {
             pos = _bossSpawnPosition1;
+        }
         else if (playerNum == PlayerNumber.Player2)
+        {
             pos = _bossSpawnPosition2;
+        }
 
         GameObject boss = Instantiate(_bossPrefabs[bossIndex], pos, Quaternion.identity, _bossRoot);
         boss.GetComponent<BossMoving>().Initialize(playerNum, MonsterType.Boss);
@@ -161,7 +186,8 @@ public class SpawnManager : Singleton<SpawnManager>
         gameInfoUIManager.UpdateMonsterCount(_monsterCount, _monsterLimit);
 
     }
-    IEnumerator WaveCountDown(int time)
+
+    private IEnumerator WaveCountDown(int time)
     {
         int remainTime = time - 1;
         while (remainTime >= 0)
@@ -172,7 +198,7 @@ public class SpawnManager : Singleton<SpawnManager>
         }
     }
 
-    IEnumerator BossCountDown(int time)
+    private IEnumerator BossCountDown(int time)
     {
         int remainTime = time - 1;
         while (remainTime >= 0)
@@ -182,8 +208,10 @@ public class SpawnManager : Singleton<SpawnManager>
             remainTime--;
         }
 
-        if(_bossCount > 0)
+        if (_bossCount > 0)
+        {
             GameManager.Instance.GameOver();
+        }
     }
 
     public void OnMonsterDeath(GameObject monster, MonsterType type)
@@ -191,7 +219,6 @@ public class SpawnManager : Singleton<SpawnManager>
         _monsterCount--;
         gameInfoUIManager.UpdateMonsterCount(_monsterCount, _monsterLimit);
 
-        
         if (type == MonsterType.Boss)
         {
             _bossCount -= 1;
@@ -212,19 +239,24 @@ public class SpawnManager : Singleton<SpawnManager>
         StopAllCoroutines();
 
         // Remove Monster
-        foreach (var monster in _spawnedMonsterList)
+        if (IsServerInitialized)
         {
-            if(monster != null)
-                Destroy(monster);
-        }
-        _spawnedMonsterList.Clear();
+            foreach (var monster in _spawnedMonsterList)
+            {
+                if (monster != null)
+                    Despawn(monster);
+            }
 
-        foreach(var monster in _spawnedBossList)
-        {
-            if (monster != null)
-                Destroy(monster);
+            _spawnedMonsterList.Clear();
+
+            foreach (var monster in _spawnedBossList)
+            {
+                if (monster != null)
+                    Despawn(monster);
+            }
+
+            _spawnedBossList.Clear();
         }
-        _spawnedBossList.Clear();
 
         // Wave Reset
         _currentWave = 1;

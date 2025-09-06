@@ -199,6 +199,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eaf9f8ae36b729f4c9c751e86548599a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
 --- !u!114 &2366368720067994448
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -211,5 +214,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53877ecb2c4b29948b216483b419ea1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _hp: 0
+  _componentIndexCache: 1
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
   _deathAnimDuration: 0.22
+  _money: 20
+  _wave: 0
+  balanceData: {fileID: 0}
