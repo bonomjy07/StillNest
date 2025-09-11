@@ -40,7 +40,6 @@ public partial class HeroUnit : NetworkBehaviour
             }
         }
     }
-
     private readonly SyncVar<HeroState> _syncState = new();
 
     // Components
@@ -62,7 +61,7 @@ public partial class HeroUnit : NetworkBehaviour
     protected static readonly int HeroStateParamId = Animator.StringToHash("HeroState");
     protected static readonly int SpeedClipId = Animator.StringToHash("Speed");
     protected static readonly int AttackClipId = Animator.StringToHash("IsAttacking");
-    private static readonly int SpeedMultiplier = Animator.StringToHash("AttackSpeedMultiplier");
+    protected static readonly int SpeedMultiplier = Animator.StringToHash("AttackSpeedMultiplier");
 
     protected virtual void Awake()
     {
@@ -92,13 +91,7 @@ public partial class HeroUnit : NetworkBehaviour
     
     private void OnStateChange(HeroState prev, HeroState next, bool asServer)
     {
-        // 서버에서만 처리
-        if (asServer)
-        {
-            //SetAnimatorParam(next);
-        }
-        // 
-        else
+        if (!asServer)
         {
             SetAnimatorParam(next);
         }
@@ -296,8 +289,8 @@ public partial class HeroUnit
     public enum HeroState
     {
         Idle = 0,
-        Moving = 1,
-        Attacking = 2,
+        Moving,
+        Attacking, 
     }
 
     public struct ReplicateData : IReplicateData
